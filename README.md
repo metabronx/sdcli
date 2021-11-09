@@ -4,7 +4,11 @@ A sdbase command line tool for automating important grunt work.
 
 Current features include:
 
-- Inviting members to the `sdbase` GitHub organization and teams, individually or en bulk (`sdcli gh invite --help`).
+- Inviting members to the `sdbase` GitHub organization and teams, individually or en bulk:
+
+  ```bash
+  sdcli gh invite --help
+  ````
 
 ## Use
 
