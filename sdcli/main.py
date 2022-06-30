@@ -1,13 +1,14 @@
-import asyncio
+import csv
+import time
 from pathlib import Path
 from typing import List, Optional
-from tqdm import tqdm
-from aiohttp import ClientSession
-from .utils import run_async, with_ghsession
-import csv
-import typer
 
-app = typer.Typer()
+import typer
+from tqdm import tqdm
+
+from .utils import wrap_ghsession
+
+app = typer.Typer(add_completion=False)
 gh_app = typer.Typer()
 app.add_typer(gh_app, name="gh", help="Does things with GitHub's v3 REST API.")
 
@@ -77,41 +78,44 @@ def gh_invite(
         )
         raise typer.Exit()
 
-    async def _inner(session: ClientSession):
+    # invite all members
+    with wrap_ghsession() as session:
         team_ids = []
         # if team slugs were provided, fetch their IDs to pass to through during
         # user invitation. it's easier (and faster) to fetch ALL our organization
         # teams and then to filter them, rather than fetching each concurrently.
         if team_slugs:
-            async with session.get(
+            resp = session.get(
                 "https://api.github.com/orgs/metabronx/teams",
                 params={"per_page": 100},
-            ) as resp:
-                data = await resp.json()
-                team_ids = [team["id"] for team in data if team["slug"] in team_slugs]
+            )
+            resp.raise_for_status()
+            team_ids = [
+                team["id"] for team in resp.json() if team["slug"] in team_slugs
+            ]
 
-        async def _invite(email: str):
+        def _invite(email: str):
             # create an invitation for the specified email with a default "member"
             # role in the organization and, if supplied, teams.
-            async with session.post(
+            resp = session.post(
                 "https://api.github.com/orgs/metabronx/invitations",
                 json={
                     "email": email,
                     "role": "direct_member",
                     "team_ids": team_ids,
                 },
-            ) as resp:
-                # GitHub may rate limit us, in which case we need to wait
-                # the amount of time they tell us before retrying
-                retry = resp.headers.get("Retry-After")
-                if retry:
-                    await asyncio.sleep(retry)
-                    await _invite(email)
+            )
+            # GitHub may rate limit us, in which case we need to wait
+            # the amount of time they tell us before retrying
+            retry = resp.headers.get("Retry-After")
+            if retry:
+                time.sleep(retry)
+                _invite(email)
 
         count = 0
         if email:
             # invite a single person if an email was supplied
-            await _invite(email)
+            _invite(email)
             count = 1
         elif from_file:
             # if a file was supplied, get all the users from it and strip away
@@ -123,20 +127,17 @@ def gh_invite(
             # create all the invitation coroutines and put them all into the
             # event loop for concurrent execution
             typer.echo()
-            for coroutine in tqdm(
-                [_invite(user) for user in users],
+            for user in tqdm(
+                users,
                 desc="Inviting all members in the given file",
                 bar_format="{l_bar}{bar}",
             ):
-                await coroutine
+                _invite(user)
 
         typer.secho(
             f"\n[ ✔ ] Successfully invited {count} person(s) to metabronx.",
             fg=typer.colors.GREEN,
         )
-
-    # invite all members
-    run_async(with_ghsession(_inner))
 
 
 @gh_app.command("assign-teams")
@@ -152,35 +153,38 @@ def assign_teams(
     """
     teamships = csv.reader(data, strict=True, skipinitialspace=True)
 
-    async def _inner(session: ClientSession):
-        async def _assign(username: str, team: str):
+    # assign all teamships
+    with wrap_ghsession() as session:
+
+        def _assign(username: str, team: str):
             # assign the specified user to the given team as a member
-            async with session.put(
-                f"https://api.github.com/orgs/metabronx/teams/{team}/memberships/{username}",
+            resp = session.put(
+                "https://api.github.com"
+                f"/orgs/metabronx/teams/{team}/memberships/{username}",
                 json={
                     "org": "metabronx",
                     "team_slug": team,
                     "username": username,
                     "role": "member",
                 },
-            ) as resp:
-                # GitHub may rate limit us, in which case we need to wait
-                # the amount of time they tell us before retrying
-                retry = resp.headers.get("Retry-After")
-                if retry:
-                    await asyncio.sleep(retry)
-                    await _assign(username, team)
+            )
+            # GitHub may rate limit us, in which case we need to wait
+            # the amount of time they tell us before retrying
+            retry = resp.headers.get("Retry-After")
+            if retry:
+                time.sleep(retry)
+                _assign(username, team)
 
         # read and submit all the team assignments
         assignments = [(ts[0], ts[1]) for ts in teamships]
         # do all the team assignments in parallel
         typer.echo()
-        for coroutine in tqdm(
-            [_assign(user, slug) for user, slug in assignments],
+        for user, slug in tqdm(
+            assignments,
             desc="Assigning teamships for all the provided users",
             bar_format="{l_bar}{bar}",
         ):
-            await coroutine
+            _assign(user, slug)
 
         unique_teams = len({t for _, t in assignments})
         typer.secho(
@@ -188,6 +192,3 @@ def assign_teams(
             f" {unique_teams} different team(s).\n",
             fg=typer.colors.GREEN,
         )
-
-    # assign all teamships
-    run_async(with_ghsession(_inner))
