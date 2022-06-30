@@ -148,6 +148,10 @@ def assign_teams(
         help="A csv text file of usernames and team memberships.",
     ),
 ):
+    """
+    Assigns each user to their metabronx GitHub organization team using the
+    provided CSV.
+    """
     teamships = csv.reader(data, strict=True, skipinitialspace=True)
 
     async def _inner(session: ClientSession):
