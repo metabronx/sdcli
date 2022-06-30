@@ -8,6 +8,7 @@ authors = ["Elias Gabriel <me@eliasfgabriel.com>"]
 python = "^3.6.2"
 typer = {extras = ["all"], version = "^0.3.2"}
 aiohttp = {extras = ["speedups"], version = "^3.7.4"}
+tqdm = "^4.64.0"
 
 [tool.poetry.scripts]
 sdcli = "sdcli.main:app"

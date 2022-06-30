@@ -32,7 +32,7 @@ async def with_ghsession(_inner, *args, **kwargs):
         headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "sdcli"},
         auth=aiohttp.BasicAuth(login=gh_user, password=gh_pat),
     ) as session:
-        return _inner(session=session, *args, **kwargs)
+        return await _inner(session=session, *args, **kwargs)
 
 
 def run_async(_coroutine):

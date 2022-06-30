@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 from typing import List, Optional
-
+from tqdm import tqdm
 from aiohttp import ClientSession
 from .utils import run_async, with_ghsession
 import csv
@@ -90,7 +90,7 @@ def gh_invite(
                 data = await resp.json()
                 team_ids = [team["id"] for team in data if team["slug"] in team_slugs]
 
-        async def _invite(email: str, progressbar=None):
+        async def _invite(email: str):
             # create an invitation for the specified email with a default "member"
             # role in the organization and, if supplied, teams.
             async with session.post(
@@ -107,9 +107,6 @@ def gh_invite(
                 if retry:
                     await asyncio.sleep(retry)
                     await _invite(email)
-                elif progressbar:
-                    # update the progress bar if we have one
-                    progressbar.update(1)
 
         count = 0
         if email:
@@ -121,16 +118,17 @@ def gh_invite(
             # any whitespace
             users = [user.strip() for user in from_file]
             count = len(users)
-            typer.echo()
             # create a progress bar for visual kindness
-            with typer.progressbar(
-                length=count, label="Inviting all members in the given file"
-            ) as progress:
-                # create all the invitation coroutines and put them all into the
-                # event loop for concurrent execution
-                await asyncio.gather(
-                    *[_invite(user, progressbar=progress) for user in users]
-                )
+            #
+            # create all the invitation coroutines and put them all into the
+            # event loop for concurrent execution
+            typer.echo()
+            for coroutine in tqdm(
+                [_invite(user) for user in users],
+                desc="Inviting all members in the given file",
+                bar_format="{l_bar}{bar}",
+            ):
+                await coroutine
 
         typer.secho(
             f"\n[ ✔ ] Successfully invited {count} person(s) to metabronx.",
@@ -155,10 +153,10 @@ def assign_teams(
     teamships = csv.reader(data, strict=True, skipinitialspace=True)
 
     async def _inner(session: ClientSession):
-        async def _assign(username: str, team: str, progressbar):
+        async def _assign(username: str, team: str):
             # assign the specified user to the given team as a member
-            async with session.post(
-                f"https://api.github.com/orgs/teams/{team}/memberships/{username}",
+            async with session.put(
+                f"https://api.github.com/orgs/metabronx/teams/{team}/memberships/{username}",
                 json={
                     "org": "metabronx",
                     "team_slug": team,
@@ -171,22 +169,25 @@ def assign_teams(
                 retry = resp.headers.get("Retry-After")
                 if retry:
                     await asyncio.sleep(retry)
-                    await _assign(username, team, progressbar)
-                else:
-                    # update the progress bar
-                    await asyncio.sleep(10)
-                    progressbar.update(1)
+                    await _assign(username, team)
 
         # read and submit all the team assignments
         assignments = [(ts[0], ts[1]) for ts in teamships]
-        with typer.progressbar(
-            length=len(assignments),
-            label="Assign teamships for all the users in the file.",
-        ) as progressbar:
-            # do all the team assignments in parallel
-            await asyncio.gather(
-                *[_assign(user, slug, progressbar) for user, slug in assignments]
-            )
+        # do all the team assignments in parallel
+        typer.echo()
+        for coroutine in tqdm(
+            [_assign(user, slug) for user, slug in assignments],
+            desc="Assigning teamships for all the provided users",
+            bar_format="{l_bar}{bar}",
+        ):
+            await coroutine
+
+        unique_teams = len({t for _, t in assignments})
+        typer.secho(
+            f"[ ✔ ] Successfully assigned {len(assignments)} user(s) to"
+            f" {unique_teams} different team(s).\n",
+            fg=typer.colors.GREEN,
+        )
 
     # assign all teamships
     run_async(with_ghsession(_inner))
