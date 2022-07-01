@@ -8,16 +8,12 @@ from tqdm import tqdm
 
 from .utils import wrap_ghsession
 
-app = typer.Typer(add_completion=False)
+app = typer.Typer(
+    help="A command-line utility for executing essential but laborious tasks.",
+    add_completion=False,
+)
 gh_app = typer.Typer()
 app.add_typer(gh_app, name="gh", help="Does things with GitHub's v3 REST API.")
-
-
-@app.callback()
-def callback():
-    """
-    A command-line utility for executing essential but laborious tasks.
-    """
 
 
 @gh_app.command("auth")
@@ -57,8 +53,10 @@ def gh_invite(
         help="The email address of the person to invite. This option is mutually"
         " exclusive with `--from-file`.",
     ),
-    team_slugs: Optional[List[str]] = typer.Option(
-        None, help="The organization teams to which to invite the person(s)."
+    team: Optional[List[str]] = typer.Option(
+        None,
+        help="The organization teams to which to invite the person(s). Pass this option"
+        " multiple times to include more than one team. Defaults to 'members'.",
     ),
     from_file: Optional[typer.FileText] = typer.Option(
         None,
@@ -69,6 +67,8 @@ def gh_invite(
     """
     Invites the given email or list of emails to the metabronx GitHub organization. A
     list of emails must be a UTF-8 text file, where each email is on a separate line.
+    Invited users are automatically added to the "members" team, unless other options
+    are given.
     """
     # check that an email was provided xor a list of emails
     if (not email and not from_file) or (email and from_file):
@@ -76,23 +76,22 @@ def gh_invite(
             "[ X ] You must supply either an email or file of emails.",
             fg=typer.colors.BRIGHT_RED,
         )
-        raise typer.Exit()
+        raise typer.Exit(code=1)
 
     # invite all members
     with wrap_ghsession() as session:
         team_ids = []
-        # if team slugs were provided, fetch their IDs to pass to through during
-        # user invitation. it's easier (and faster) to fetch ALL our organization
-        # teams and then to filter them, rather than fetching each concurrently.
-        if team_slugs:
+        team = team or ["members"]
+        # fetch team IDs to pass to through during user invitation. it's easier
+        # (and faster) to fetch ALL our organization teams and then to filter them,
+        # rather than fetching each concurrently.
+        if team:
             resp = session.get(
                 "https://api.github.com/orgs/metabronx/teams",
                 params={"per_page": 100},
             )
             resp.raise_for_status()
-            team_ids = [
-                team["id"] for team in resp.json() if team["slug"] in team_slugs
-            ]
+            team_ids = [t["id"] for t in resp.json() if t["slug"] in team]
 
         def _invite(email: str):
             # create an invitation for the specified email with a default "member"
@@ -122,10 +121,8 @@ def gh_invite(
             # any whitespace
             users = [user.strip() for user in from_file]
             count = len(users)
-            # create a progress bar for visual kindness
-            #
-            # create all the invitation coroutines and put them all into the
-            # event loop for concurrent execution
+            # create a progress bar for visual kindness and run through creating
+            # all the invitations
             typer.echo()
             for user in tqdm(
                 users,
@@ -162,9 +159,6 @@ def assign_teams(
                 "https://api.github.com"
                 f"/orgs/metabronx/teams/{team}/memberships/{username}",
                 json={
-                    "org": "metabronx",
-                    "team_slug": team,
-                    "username": username,
                     "role": "member",
                 },
             )
@@ -173,7 +167,7 @@ def assign_teams(
             retry = resp.headers.get("Retry-After")
             if retry:
                 time.sleep(retry)
-                _assign(username, team)
+                _assign(username.strip(), team.strip())
 
         # read and submit all the team assignments
         assignments = [(ts[0], ts[1]) for ts in teamships]
@@ -190,5 +184,72 @@ def assign_teams(
         typer.secho(
             f"[ ✔ ] Successfully assigned {len(assignments)} user(s) to"
             f" {unique_teams} different team(s).\n",
+            fg=typer.colors.GREEN,
+        )
+
+
+@gh_app.command("remove")
+def gh_remove(
+    username: Optional[str] = typer.Argument(
+        None,
+        help="The username of the person to remove. This option is mutually exclusive"
+        " with `--from-file`.",
+    ),
+    from_file: Optional[typer.FileText] = typer.Option(
+        None,
+        help="A line-delimited text file of usernames to remove. This option "
+        "is mutually exclusive with supplying a single username.",
+    ),
+):
+    """
+    Removes the given username or list of usernames from the metabronx GitHub
+    organization. A list of usernames must be a text file, where each username is on a
+    separate line.
+    """
+    # check that an email was provided xor a list of emails
+    if (not username and not from_file) or (username and from_file):
+        typer.secho(
+            "[ X ] You must supply either a username or file of usernames.",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        raise typer.Exit(code=1)
+
+    # invite all members
+    with wrap_ghsession() as session:
+
+        def _remove(username: str):
+            # remove the specified username from the organization, or cancel a pending
+            # invitation. this will send an email notification.
+            resp = session.delete(
+                f"https://api.github.com/orgs/metabronx/members/{username}"
+            )
+            # GitHub may rate limit us, in which case we need to wait
+            # the amount of time they tell us before retrying
+            retry = resp.headers.get("Retry-After")
+            if retry:
+                time.sleep(retry)
+                _remove(username)
+
+        count = 0
+        if username:
+            # remove a single person if a username was supplied
+            _remove(username)
+            count = 1
+        elif from_file:
+            # if a file was supplied, get all the users from it and strip away
+            # any whitespace
+            users = [user.strip() for user in from_file]
+            count = len(users)
+            # remove all the users
+            typer.echo()
+            for user in tqdm(
+                users,
+                desc="Inviting all members in the given file",
+                bar_format="{l_bar}{bar}",
+            ):
+                _remove(user)
+
+        typer.secho(
+            f"\n[ ✔ ] Successfully invited {count} person(s) to metabronx.",
             fg=typer.colors.GREEN,
         )
