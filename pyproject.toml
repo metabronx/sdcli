@@ -19,11 +19,10 @@ sdcli = "sdcli.main:app"
 profile = "black"
 
 [tool.mypy]
-ignore_missing_imports = true
-warn_return_any = true
-show_column_numbers = true
 follow_imports = "silent"
+warn_return_any = true
 warn_unreachable = true
+show_column_numbers = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

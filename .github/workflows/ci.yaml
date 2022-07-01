@@ -13,4 +13,4 @@ jobs:
         uses: jpetrucciani/mypy-check@master
         with:
           path: "sdcli"
-          mypy_flags: "--pretty --check --config-file pyproject.toml"
+          mypy_flags: "--install-types --non-interactive --pretty --check --config-file pyproject.toml"
