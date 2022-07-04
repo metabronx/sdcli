@@ -1,0 +1,16 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check formatting
+        uses: psf/black@stable
+      - name: Check typing
+        uses: jpetrucciani/mypy-check@master
+        with:
+          path: "sdcli"
+          mypy_flags: "--install-types --non-interactive --pretty --check --config-file pyproject.toml"

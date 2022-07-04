@@ -1,19 +1,16 @@
 [tool.poetry]
 name = "sdcli"
-version = "1.0.0"
-description = "CLI scripts for automating important grunt work."
+version = "2.0.0rc0"
+description = "A command line tool for automating important grunt work."
 authors = ["Elias Gabriel <me@eliasfgabriel.com>"]
+include = ["sdcli/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
+python = "^3.7"
 typer = {extras = ["all"], version = "^0.3.2"}
-aiohttp = {extras = ["speedups"], version = "^3.7.4"}
-
-[tool.poetry.dev-dependencies]
-black = "^21.7b0"
-isort = "^5.9.2"
-mypy = "^0.910"
-flake8 = "^3.9.2"
+tqdm = "^4.64.0"
+requests = "^2.28.1"
+cachecontrol = "^0.12.11"
 
 [tool.poetry.scripts]
 sdcli = "sdcli.main:app"
@@ -22,11 +19,11 @@ sdcli = "sdcli.main:app"
 profile = "black"
 
 [tool.mypy]
+follow_imports = "silent"
 ignore_missing_imports = true
 warn_return_any = true
-show_column_numbers = true
-follow_imports = "silent"
 warn_unreachable = true
+show_column_numbers = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
