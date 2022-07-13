@@ -15,7 +15,7 @@ class RetrySession(requests.Session):
 
         # GitHub et al may rate limit us, in which case we need to wait
         # the amount of time they tell us before retrying
-        retry = resp.headers.get("Retry-After")
+        retry = float(resp.headers.get("Retry-After", 0))
         if retry:
             time.sleep(retry)
             return self.request(method, url, **kwargs)
