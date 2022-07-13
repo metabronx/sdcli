@@ -1,4 +1,4 @@
-# `sdcli`
+# sdcli
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/metabronx/sdcli/CI?label=tests&style=flat-square)
 
@@ -52,7 +52,7 @@ $ sdcli gh assign-teams [OPTIONS] DATA
 
 **Arguments**:
 
-* `DATA`: A csv text file of usernames and team memberships.  [required]
+* `DATA`: A csv text file of usernames and team memberships, without a header.  [required]
 
 **Options**:
 
@@ -61,8 +61,8 @@ $ sdcli gh assign-teams [OPTIONS] DATA
 ### `sdcli gh auth`
 
 Authenticates your machine with GitHub so any future requests are executed as
-yourself. To avoid saving your credentials on your host machine, you may set an
-environment variable or pass them to every command.
+yourself. To avoid saving your credentials on your host machine, you may export
+the GH_USERNAME and GH_TOKEN environment variable or pass them to every command.
 
 Credentials are stored in plain-text at `~/.sdcli/credentials`.
 

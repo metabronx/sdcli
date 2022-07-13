@@ -1,5 +1,4 @@
 import csv
-import time
 from pathlib import Path
 from typing import List, Optional
 
@@ -20,8 +19,8 @@ app.add_typer(gh_app, name="gh", help="Does things with GitHub's v3 REST API.")
 def gh_login():
     """
     Authenticates your machine with GitHub so any future requests are executed as
-    yourself. To avoid saving your credentials on your host machine, you may set an
-    environment variable or pass them to every command.
+    yourself. To avoid saving your credentials on your host machine, you may export
+    the GH_USERNAME and GH_TOKEN environment variable or pass them to every command.
 
     Credentials are stored in plain-text at `~/.sdcli/credentials`.
     """
@@ -90,13 +89,12 @@ def gh_invite(
                 "https://api.github.com/orgs/metabronx/teams",
                 params={"per_page": 100},
             )
-            resp.raise_for_status()
             team_ids = [t["id"] for t in resp.json() if t["slug"] in team]
 
         def _invite(email: str):
             # create an invitation for the specified email with a default "member"
             # role in the organization and, if supplied, teams.
-            resp = session.post(
+            session.post(
                 "https://api.github.com/orgs/metabronx/invitations",
                 json={
                     "email": email,
@@ -104,12 +102,6 @@ def gh_invite(
                     "team_ids": team_ids,
                 },
             )
-            # GitHub may rate limit us, in which case we need to wait
-            # the amount of time they tell us before retrying
-            retry = resp.headers.get("Retry-After")
-            if retry:
-                time.sleep(retry)
-                _invite(email)
 
         count = 0
         if email:
@@ -141,7 +133,7 @@ def gh_invite(
 def assign_teams(
     data: typer.FileText = typer.Argument(
         ...,
-        help="A csv text file of usernames and team memberships.",
+        help="A csv text file of usernames and team memberships, without a header.",
     ),
 ):
     """
@@ -155,19 +147,13 @@ def assign_teams(
 
         def _assign(username: str, team: str):
             # assign the specified user to the given team as a member
-            resp = session.put(
+            session.put(
                 "https://api.github.com"
                 f"/orgs/metabronx/teams/{team}/memberships/{username}",
                 json={
                     "role": "member",
                 },
             )
-            # GitHub may rate limit us, in which case we need to wait
-            # the amount of time they tell us before retrying
-            retry = resp.headers.get("Retry-After")
-            if retry:
-                time.sleep(retry)
-                _assign(username.strip(), team.strip())
 
         # read and submit all the team assignments
         assignments = [(ts[0], ts[1]) for ts in teamships]
@@ -178,7 +164,7 @@ def assign_teams(
             desc="Assigning teamships for all the provided users",
             bar_format="{l_bar}{bar}",
         ):
-            _assign(user, slug)
+            _assign(user.strip(), slug.strip())
 
         unique_teams = len({t for _, t in assignments})
         typer.secho(
@@ -220,15 +206,7 @@ def gh_remove(
         def _remove(username: str):
             # remove the specified username from the organization, or cancel a pending
             # invitation. this will send an email notification.
-            resp = session.delete(
-                f"https://api.github.com/orgs/metabronx/members/{username}"
-            )
-            # GitHub may rate limit us, in which case we need to wait
-            # the amount of time they tell us before retrying
-            retry = resp.headers.get("Retry-After")
-            if retry:
-                time.sleep(retry)
-                _remove(username)
+            session.delete(f"https://api.github.com/orgs/metabronx/members/{username}")
 
         count = 0
         if username:
@@ -244,12 +222,12 @@ def gh_remove(
             typer.echo()
             for user in tqdm(
                 users,
-                desc="Inviting all members in the given file",
+                desc="Removing all members in the given file",
                 bar_format="{l_bar}{bar}",
             ):
                 _remove(user)
 
         typer.secho(
-            f"\n[ ✔ ] Successfully invited {count} person(s) to metabronx.",
+            f"\n[ ✔ ] Successfully removed {count} person(s) from metabronx.",
             fg=typer.colors.GREEN,
         )
