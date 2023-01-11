@@ -1,6 +1,6 @@
 # sdcli
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/metabronx/sdcli/CI?label=tests&style=flat-square)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/metabronx/sdcli/ci.yaml?label=tests&style=flat-square)
 
 A command-line utility for executing essential but laborious tasks.
 
