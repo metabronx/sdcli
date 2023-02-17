@@ -1,0 +1,37 @@
+version: "3"
+
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:alpine
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - ${FPDIR}/vpn-configs:/config
+    ports:
+      - 51821:51820/udp
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+
+  blackstrap:
+    image: ghcr.io/metabronx/blackstrap
+    volumes:
+      # - ${MOUNT}:/home/vpn-user/remote
+      - ${FPDIR}/vpn-ssh:/home/vpn-user/.ssh
+      - ${FPDIR}/vpn-configs:/wireguard/config
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    depends_on:
+      - wireguard
+    restart: unless-stopped
+
+volumes:
+  vpn-configs:
+  vpn-ssh:

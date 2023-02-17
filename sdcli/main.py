@@ -5,6 +5,7 @@ from typing import List, Optional
 import typer
 from tqdm import tqdm
 
+from .blackstrap import blackstrap
 from .utils import wrap_ghsession
 
 app = typer.Typer(
@@ -13,6 +14,7 @@ app = typer.Typer(
 )
 gh_app = typer.Typer()
 app.add_typer(gh_app, name="gh", help="Does things with GitHub's v3 REST API.")
+app.add_typer(blackstrap, name="vpn", help="Does things with a Wireguard VPN.")
 
 
 @gh_app.command("auth")
@@ -25,8 +27,9 @@ def gh_login():
     Credentials are stored in plain-text at `~/.sdcli/credentials`.
     """
     typer.secho(
-        "\n[ ! ] Warning! This will save your GitHub credentials locally to perform all"
-        " future `gh` commands. Anything saved already will be overwritten.\n",
+        "\n[ ! ] Warning! This will save your GitHub credentials in plaintext locally"
+        " to perform all future `gh` commands. Anything saved already will be"
+        " overwritten.\n",
         fg=typer.colors.BRIGHT_RED,
     )
 

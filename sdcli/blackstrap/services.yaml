@@ -1,0 +1,37 @@
+version: "3"
+
+services:
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:alpine
+    env_file: npeers
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+      - SERVERURL=auto
+      - PEERDNS=1.1.1.1
+      - PERSISTENTKEEPALIVE_PEERS=all
+      - LOG_CONFS=false
+    volumes:
+      - ${FPDIR}/vpn-configs:/config
+    ports:
+      - 51820:51820/udp
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    restart: unless-stopped
+
+  blackstrap:
+    image: ghcr.io/metabronx/blackstrap
+    command: tail -f /dev/null
+    volumes:
+      - ${MOUNT}:/home/vpn-user/remote
+      - ${FPDIR}/vpn-ssh:/home/vpn-user/.ssh
+      - ${FPDIR}/vpn-configs:/wireguard/config
+    depends_on:
+      - wireguard
+    restart: unless-stopped
+
+volumes:
+  vpn-configs:
+  vpn-ssh:
