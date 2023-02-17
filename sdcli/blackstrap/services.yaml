@@ -23,6 +23,9 @@ services:
 
   blackstrap:
     image: ghcr.io/metabronx/blackstrap
+    user: vpn-user
+    group_add:
+      - vpn-user
     command: tail -f /dev/null
     volumes:
       - ${MOUNT}:/home/vpn-user/remote
@@ -31,7 +34,3 @@ services:
     depends_on:
       - wireguard
     restart: unless-stopped
-
-volumes:
-  vpn-configs:
-  vpn-ssh:

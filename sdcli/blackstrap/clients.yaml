@@ -10,7 +10,7 @@ services:
     volumes:
       - ${FPDIR}/vpn-configs:/config
     ports:
-      - 51821:51820/udp
+      - 51820:51820/udp
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -20,6 +20,9 @@ services:
 
   blackstrap:
     image: ghcr.io/metabronx/blackstrap
+    user: vpn-user
+    group_add:
+      - vpn-user
     volumes:
       # - ${MOUNT}:/home/vpn-user/remote
       - ${FPDIR}/vpn-ssh:/home/vpn-user/.ssh
@@ -32,6 +35,3 @@ services:
       - wireguard
     restart: unless-stopped
 
-volumes:
-  vpn-configs:
-  vpn-ssh:
