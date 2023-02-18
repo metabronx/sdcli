@@ -159,7 +159,7 @@ def add_client(
             "docker",
             "compose",
             "-f",
-            yaml,
+            str(yaml),
             "exec",
             "--user",
             "vpn-user",
@@ -246,7 +246,7 @@ def connect(
                 "docker",
                 "compose",
                 "-f",
-                yaml,
+                str(yaml),
                 "run",
                 "--quiet-pull",
                 "--rm",
@@ -269,19 +269,17 @@ def connect(
     print("Connecting filesystems...")
     run_command(
         [
-            [
-                "docker",
-                "compose",
-                "-f",
-                yaml,
-                "exec",
-                "blackstrap",
-                "--user",
-                "vpn-user",
-                "--workdir",
-                "/home/vpn-user",
-                "/scripts/mountfs.sh",
-            ]
+            "docker",
+            "compose",
+            "-f",
+            str(yaml),
+            "exec",
+            "--user",
+            "vpn-user",
+            "--workdir",
+            "/home/vpn-user",
+            "blackstrap",
+            "/scripts/mountfs.sh",
         ]
     )
 
