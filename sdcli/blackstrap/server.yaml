@@ -14,8 +14,7 @@ services:
       - LOG_CONFS=false
     volumes:
       - ${FPDIR}/vpn-configs:/config
-      - ${FPDIR}/server-ssh:/home/vpn-user/.ssh
-      - ${MOUNT}:/home/vpn-user/remote
+      - ${MOUNT}:/mnt/remote
     ports:
       - 51820:51820/udp
     cap_add:

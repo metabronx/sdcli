@@ -80,7 +80,7 @@ def start(
 ):
     """Starts a Wireguard VPN filesystem bridge"""
 
-    # check if the provided mount is a directory and not .ssh
+    # check if the provided mount is a directory and not ./remote
     if mount:
         if not mount.is_dir():
             typer.secho(
@@ -88,9 +88,9 @@ def start(
                 fg=typer.colors.BRIGHT_RED,
             )
             raise typer.Exit(code=1)
-        elif mount.name == ".ssh" or mount.name == "remote":
+        elif mount.name == "remote":
             typer.secho(
-                "[ X ] The mount directory cannot end in '.ssh' or 'remote'.",
+                "[ X ] The mount directory cannot end in 'remote'.",
                 fg=typer.colors.BRIGHT_RED,
             )
             raise typer.Exit(code=1)
@@ -119,7 +119,7 @@ def start(
                 )
             )
 
-        yaml.with_name("server-ssh").mkdir()
+        yaml.with_name("vpn-configs").mkdir()
         shutil.copy(templ_yaml.with_name("npeers"), yaml.with_name("npeers"))
 
     print("The VPN server is starting. This may take a few seconds.")
@@ -161,10 +161,6 @@ def add_client(
             "-f",
             str(yaml),
             "exec",
-            "--user",
-            "vpn-user",
-            "--workdir",
-            "/home/vpn-user",
             "blackstrap",
             "/scripts/add-client.sh",
             str(num),
@@ -237,7 +233,6 @@ def connect(
             )
 
         yaml.with_name("vpn-configs").mkdir()
-        yaml.with_name("client-ssh").mkdir()
 
         # download the croc package and put the files in the right places
         print("Configuring the VPN profile. This might take a few seconds.")
@@ -251,10 +246,8 @@ def connect(
                 "--quiet-pull",
                 "--rm",
                 "--entrypoint=''",
-                "--user",
-                "vpn-user",
                 "--workdir",
-                "/home/vpn-user",
+                "/config",
                 "blackstrap",
                 "/scripts/install-client.sh",
                 code,
@@ -274,10 +267,8 @@ def connect(
             "-f",
             str(yaml),
             "exec",
-            "--user",
-            "vpn-user",
             "--workdir",
-            "/home/vpn-user",
+            "/config",
             "blackstrap",
             "/scripts/mountfs.sh",
         ]
