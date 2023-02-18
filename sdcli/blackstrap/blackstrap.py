@@ -99,7 +99,7 @@ def start(
     _check_docker()
 
     # construct the expected path of the a cached server compose yaml
-    yaml = _fingerprint_path(fingerprint=fingerprint, hashable=mount) / "services.yaml"
+    yaml = _fingerprint_path(fingerprint=fingerprint, hashable=mount) / "server.yaml"
 
     # if it doesn't exist, copy the template from here, apply the changes, and save it
     if not yaml.exists():
@@ -148,7 +148,7 @@ def add_client(
 
     # restart the VPN services to allow Wireguard to generate the new peer configs
     print("The VPN server is restarting. This might take a few seconds.")
-    yaml = npeers.with_name("services.yaml")
+    yaml = npeers.with_name("server.yaml")
     run_command(f"docker compose -f {yaml} down")
     run_command(f"docker compose -f {yaml} up --wait")
 
@@ -223,7 +223,7 @@ def connect(
             raise typer.Exit(code=1)
 
         yaml.parent.mkdir(parents=True, exist_ok=True)
-        templ_yaml = Path(__file__).with_name("clients.yaml")
+        templ_yaml = Path(__file__).with_name("client.yaml")
 
         with templ_yaml.open("r") as f:
             template = Template(f.read())
