@@ -20,9 +20,6 @@ services:
 
   blackstrap:
     image: ghcr.io/metabronx/blackstrap
-    user: vpn-user
-    group_add:
-      - vpn-user
     volumes:
       # - ${MOUNT}:/home/vpn-user/remote
       - ${FPDIR}/vpn-ssh:/home/vpn-user/.ssh

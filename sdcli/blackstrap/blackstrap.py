@@ -119,6 +119,8 @@ def start(
                 )
             )
 
+        yaml.with_name("vpn-configs").mkdir()
+        yaml.with_name("vpn-ssh").mkdir()
         shutil.copy(templ_yaml.with_name("npeers"), yaml.with_name("npeers"))
 
     print("The VPN services are starting. This may take a few seconds.")
@@ -230,6 +232,9 @@ def connect(
                     }
                 )
             )
+
+        yaml.with_name("vpn-configs").mkdir()
+        yaml.with_name("vpn-ssh").mkdir()
 
         # download the croc package and put the files in the right places
         print("Configuring the VPN profile. This might take a few seconds.")
