@@ -3,21 +3,22 @@ version: "3"
 services:
   blackstrap:
     image: ghcr.io/metabronx/blackstrap
+    env_file: npeers
     environment:
+      - PUID=1000
+      - GUID=1000
       - TZ=America/New_York
+      - SERVERURL=10.0.0.43
+      - PEERDNS=1.1.1.1
+      - PERSISTENTKEEPALIVE_PEERS=all
+      - LOG_CONFS=false
     volumes:
       - ${FPDIR}/vpn-configs:/config
-      - ${FPDIR}/client-ssh:/home/vpn-user/.ssh
+      - ${FPDIR}/server-ssh:/home/vpn-user/.ssh
       - ${MOUNT}:/home/vpn-user/remote
     ports:
       - 51820:51820/udp
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-      - SYS_ADMIN
-    privileged: true
-    sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
-    devices:
-      - /dev/fuse
     restart: unless-stopped

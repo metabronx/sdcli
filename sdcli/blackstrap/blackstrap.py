@@ -106,7 +106,7 @@ def start(
         assert mount
 
         yaml.parent.mkdir(parents=True, exist_ok=True)
-        templ_yaml = Path(__file__).with_name("services.yaml")
+        templ_yaml = Path(__file__).with_name("server.yaml")
 
         with templ_yaml.open("r") as f:
             template = Template(f.read())
@@ -122,7 +122,7 @@ def start(
         yaml.with_name("server-ssh").mkdir()
         shutil.copy(templ_yaml.with_name("npeers"), yaml.with_name("npeers"))
 
-    print("The VPN services are starting. This may take a few seconds.")
+    print("The VPN server is starting. This may take a few seconds.")
     run_command(f"docker compose -f {yaml} up --wait")
 
     typer.secho(
@@ -147,7 +147,7 @@ def add_client(
     npeers.write_text(f"PEERS={num}")
 
     # restart the VPN services to allow Wireguard to generate the new peer configs
-    print("The VPN services are restarting. This might take a few seconds.")
+    print("The VPN server is restarting. This might take a few seconds.")
     yaml = npeers.with_name("services.yaml")
     run_command(f"docker compose -f {yaml} down")
     run_command(f"docker compose -f {yaml} up --wait")
@@ -161,11 +161,11 @@ def add_client(
             "-f",
             yaml,
             "exec",
-            "blackstrap",
             "--user",
             "vpn-user",
             "--workdir",
             "/home/vpn-user",
+            "blackstrap",
             "/scripts/add-client.sh",
             str(num),
         ]
@@ -194,7 +194,7 @@ def connect(
     _check_docker()
 
     # construct the expected path of the a cached client compose yaml
-    yaml = _fingerprint_path(hashable=name) / "clients.yaml"
+    yaml = _fingerprint_path(hashable=name) / "client.yaml"
 
     # if it doesn't exist, copy the template from here, apply the changes, and save it
     if not yaml.exists():
@@ -262,7 +262,7 @@ def connect(
         )
 
     # boot the wireguard client and filesystem bridge
-    print("Starting the VPN client bridge. This might take a few more seconds.")
+    print("Starting the VPN client. This might take a few more seconds.")
     run_command(f"docker compose -f {yaml} down")
     run_command(f"docker compose -f {yaml} up --force-recreate --wait")
 
