@@ -119,8 +119,7 @@ def start(
                 )
             )
 
-        yaml.with_name("vpn-configs").mkdir()
-        yaml.with_name("vpn-ssh").mkdir()
+        yaml.with_name("server-ssh").mkdir()
         shutil.copy(templ_yaml.with_name("npeers"), yaml.with_name("npeers"))
 
     print("The VPN services are starting. This may take a few seconds.")
@@ -163,6 +162,10 @@ def add_client(
             yaml,
             "exec",
             "blackstrap",
+            "--user",
+            "vpn-user",
+            "--workdir",
+            "/home/vpn-user",
             "/scripts/add-client.sh",
             str(num),
         ]
@@ -234,7 +237,7 @@ def connect(
             )
 
         yaml.with_name("vpn-configs").mkdir()
-        yaml.with_name("vpn-ssh").mkdir()
+        yaml.with_name("client-ssh").mkdir()
 
         # download the croc package and put the files in the right places
         print("Configuring the VPN profile. This might take a few seconds.")
@@ -245,7 +248,13 @@ def connect(
                 "-f",
                 yaml,
                 "run",
+                "--quiet-pull",
                 "--rm",
+                "--entrypoint=''",
+                "--user",
+                "vpn-user",
+                "--workdir",
+                "/home/vpn-user",
                 "blackstrap",
                 "/scripts/install-client.sh",
                 code,
@@ -256,6 +265,25 @@ def connect(
     print("Starting the VPN client bridge. This might take a few more seconds.")
     run_command(f"docker compose -f {yaml} down")
     run_command(f"docker compose -f {yaml} up --force-recreate --wait")
+
+    print("Connecting filesystems...")
+    run_command(
+        [
+            [
+                "docker",
+                "compose",
+                "-f",
+                yaml,
+                "exec",
+                "blackstrap",
+                "--user",
+                "vpn-user",
+                "--workdir",
+                "/home/vpn-user",
+                "/scripts/mountfs.sh",
+            ]
+        ]
+    )
 
     typer.secho(
         "\n[ ✔ ] Successfully connected! You should see the remote filesystem at your"
