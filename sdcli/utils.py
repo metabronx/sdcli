@@ -2,6 +2,7 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, run
+from typing import Union
 
 import typer
 from cachecontrol import CacheControl
@@ -62,18 +63,19 @@ def wrap_ghsession():
         raise typer.Exit(code=1)
 
 
-def run_command(command: str, *args: str):
+def run_command(command: Union[str, list]):
     """
     Run an arbitrary command with arbitrary arguments. STDOUT is preserved
     while STDERR is formatted upon unsuccessful command execution, either at
     the command or OS level.
     """
-    cmd = command.split(" ") + list(args)
+    if isinstance(command, str):
+        command = command.split(" ")
 
     try:
         # try to the provided command as a subprocess, capturing
         # the stderr if the command fails
-        run(cmd, universal_newlines=True, stderr=PIPE, check=True)
+        run(command, universal_newlines=True, stderr=PIPE, check=True)
     except Exception as err:
         # if the command failed, we only care about its stderr
         if isinstance(err, CalledProcessError):
@@ -86,7 +88,7 @@ def run_command(command: str, *args: str):
         typer.echo(
             typer.style(
                 "\n[ X ] Something went wrong! If you're not a developer,"
-                f" ignore the rest. Otherwise, the traceback from `{' '.join(cmd)}`"
+                f" ignore the rest. Otherwise, the traceback from `{' '.join(command)}`"
                 " was recaptured and is printed.",
                 fg=typer.colors.BRIGHT_RED,
             )
