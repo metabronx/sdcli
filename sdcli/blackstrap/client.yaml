@@ -10,7 +10,7 @@ services:
     volumes:
       - ${FPDIR}/vpn-configs:/config
       - ${FPDIR}/ssh-jail:/root/.ssh
-      - ${MOUNT}:/mnt/remote
+      # - ${MOUNT}:/home/vpn-user/remote
     ports:
       - 51820:51820/udp
     cap_add:
