@@ -2,6 +2,7 @@ version: "3"
 
 services:
   blackstrap:
+    container_name: blackstrap
     image: ghcr.io/metabronx/blackstrap
     environment:
       - PUID=1000
@@ -10,7 +11,8 @@ services:
     volumes:
       - ${FPDIR}/vpn-configs:/config
       - ${FPDIR}/ssh-jail:/root/.ssh
-      # - ${MOUNT}:/home/vpn-user/remote
+      - ${MOUNT}:/home/vpn-user/remote
+    working_dir: /home/vpn-user/remote
     ports:
       - 51820:51820/udp
     cap_add:
