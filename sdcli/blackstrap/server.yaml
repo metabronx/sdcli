@@ -14,6 +14,7 @@ services:
       - LOG_CONFS=false
     volumes:
       - ${FPDIR}/vpn-configs:/config
+      - ${FPDIR}/ssh-jail:/home/vpn-user
       - ${MOUNT}:/mnt/remote
     ports:
       - 51820:51820/udp

@@ -9,6 +9,7 @@ services:
       - TZ=America/New_York
     volumes:
       - ${FPDIR}/vpn-configs:/config
+      - ${FPDIR}/ssh-jail:/root/.ssh
       - ${MOUNT}:/mnt/remote
     ports:
       - 51820:51820/udp
