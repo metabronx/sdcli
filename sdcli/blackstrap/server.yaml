@@ -10,6 +10,7 @@ services:
       - GUID=1000
       - TZ=America/New_York
       - SERVERURL=auto
+      - PEERDNS=1.1.1.1
       # - PERSISTENTKEEPALIVE_PEERS=all
       - LOG_CONFS=false
     volumes:
