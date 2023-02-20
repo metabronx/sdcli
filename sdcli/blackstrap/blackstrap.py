@@ -1,4 +1,5 @@
 import hashlib
+import platform
 import shutil
 import subprocess
 from pathlib import Path
@@ -30,7 +31,28 @@ def _check_docker():
         )
         raise typer.Exit(code=1)
 
-    print(f"* Using {docker_check.stdout.decode()}")
+
+def _check_wsl():
+    """Checks if on Windows and WSL is using the correct Linux kernel."""
+    wslconfig = Path.home() / ".wslconfig"
+    kernel = Path.home() / ".sdcli" / "wsl-kernel"
+
+    # check if on Windows and
+    # 1. .wslconfig exists
+    # 2. the custom kernel exists
+    # 3. if the .wslconfig says to use the custom kernel
+    if platform.system() == "Windows" and (
+        not wslconfig.exists()
+        or not kernel.exists()
+        or not f"kernel={kernel}" not in wslconfig.read_text()
+    ):
+        typer.secho(
+            "[ X ] You are running Windows, but the default Linux kernel used by WSL"
+            " isn't configured correctly for use with Wireguard. Run `sdcli vpn"
+            " setup-wsl` to download and install a pre-built custom kernel.",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        raise typer.Exit(code=1)
 
 
 def _fingerprint_path(
@@ -65,6 +87,52 @@ def _fingerprint_path(
     return path
 
 
+@blackstrap.callback()
+def _check_prerequisites(ctx: typer.Context):
+    """Checks that all system prerequisites have been met."""
+    _check_docker()
+
+    if ctx.invoked_subcommand != "setup-wsl":
+        _check_wsl()
+
+
+@blackstrap.command("setup-wsl")
+def wsl():
+    """
+    Downloads and configures Windows Subsystem for Linux to use blackstrap's pre-built
+    Linux kernel. This is required to support peer connections on Windows machines.
+
+    ! [WARNING] !
+    This will replace the contents of your local .wslconfig. Download and add the
+    kernel manually (~/.sdcli/wsl-kernel) if wish to keep it.
+    """
+    print("Downloading the kernel...")
+    run_command(
+        [
+            "docker",
+            "create",
+            "--rm",
+            "--name",
+            "setup-wsl",
+            "ghcr.io/metabronx/blackstrap-wsl-kernel",
+        ]
+    )
+    kernel = Path.home() / ".sdcli" / "wsl-kernel"
+    kernel.parent.mkdir(exist_ok=True)
+    run_command(["docker", "cp", "setup-wsl:/kernel", str(kernel)])
+
+    print("Patching WSL...")
+    wslconfig = Path.home() / ".wslconfig"
+    wslconfig.write_text(f"[boot]\nsystemd=true\n\n[wsl2]\nkernel={kernel}")
+
+    run_command("wsl --shutdown")
+
+    typer.secho(
+        "\n[ ✔ ] Successfully configured WSL. Ensure to restart Docker Desktop.",
+        fg=typer.colors.GREEN,
+    )
+
+
 @blackstrap.command("start")
 def start(
     fingerprint: Optional[str] = typer.Option(
@@ -94,9 +162,6 @@ def start(
                 fg=typer.colors.BRIGHT_RED,
             )
             raise typer.Exit(code=1)
-
-    # ensure docker is installed
-    _check_docker()
 
     # construct the expected path of the a cached server compose yaml
     yaml = _fingerprint_path(fingerprint=fingerprint, hashable=mount) / "server.yaml"
@@ -186,8 +251,6 @@ def connect(
     ),
 ):
     """Configures a new VPN connection with remote filesystem."""
-    # ensure docker is available
-    _check_docker()
 
     # construct the expected path of the a cached client compose yaml
     yaml = _fingerprint_path(hashable=name) / "client.yaml"
