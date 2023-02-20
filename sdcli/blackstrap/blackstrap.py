@@ -35,7 +35,8 @@ def _check_docker():
 def _check_wsl():
     """Checks if on Windows and WSL is using the correct Linux kernel."""
     wslconfig = Path.home() / ".wslconfig"
-    kernel = Path.home() / ".sdcli" / "wsl-kernel"
+    kernel = Path.home() / ".sdcli" / "blackstrap" / "wsl-kernel"
+    kernel_escaped = str(kernel).replace("\\", "\\\\")
 
     # check if on Windows and
     # 1. .wslconfig exists
@@ -44,7 +45,7 @@ def _check_wsl():
     if platform.system() == "Windows" and (
         not wslconfig.exists()
         or not kernel.exists()
-        or not f"kernel={kernel}" not in wslconfig.read_text()
+        or f"kernel={kernel_escaped}" not in wslconfig.read_text()
     ):
         typer.secho(
             "[ X ] You are running Windows, but the default Linux kernel used by WSL"
@@ -123,14 +124,14 @@ def wsl():
             "ghcr.io/metabronx/blackstrap-wsl-kernel",
         ]
     )
-    kernel = Path.home() / ".sdcli" / "wsl-kernel"
-    kernel.parent.mkdir(exist_ok=True)
+    kernel = Path.home() / ".sdcli" / "blackstrap" / "wsl-kernel"
+    kernel.parent.mkdir(parents=True, exist_ok=True)
     run_command(["docker", "cp", "setup-wsl:/kernel", str(kernel)])
 
     print("Patching WSL...")
     wslconfig = Path.home() / ".wslconfig"
-    wslconfig.write_text(f"[boot]\nsystemd=true\n\n[wsl2]\nkernel={kernel}")
-
+    kernel_escaped = str(kernel).replace("\\", "\\\\")
+    wslconfig.write_text(f"[boot]\nsystemd=true\n\n[wsl2]\nkernel={kernel_escaped}")
     run_command("wsl --shutdown")
 
     typer.secho(
