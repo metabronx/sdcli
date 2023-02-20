@@ -79,8 +79,7 @@ def _fingerprint_path(
 
     if fingerprint and not path.exists():
         typer.secho(
-            """[ X ] The fingerprint provided does not exist.""",
-            fg=typer.colors.BRIGHT_RED,
+            "[ X ] The fingerprint provided does not exist.", fg=typer.colors.BRIGHT_RED
         )
         raise typer.Exit(code=1)
 
@@ -106,6 +105,13 @@ def wsl():
     This will replace the contents of your local .wslconfig. Download and add the
     kernel manually (~/.sdcli/wsl-kernel) if wish to keep it.
     """
+    if platform.system() != "Windows":
+        typer.secho(
+            "[ X ] This command only makes sense on Windows systems.",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        raise typer.Exit(code=1)
+
     print("Downloading the kernel...")
     run_command(
         [
