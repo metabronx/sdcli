@@ -149,6 +149,7 @@ def start(
     ),
     mount: Optional[Path] = typer.Option(
         None,
+        resolve_path=True,
         help="The directory to expose to client VPN connections. This option is"
         " mutually exclusive with `--fingerprint`.",
     ),
@@ -248,16 +249,21 @@ def add_client(
 
 @blackstrap.command("connect")
 def connect(
-    name: str = typer.Option(..., help="A name to give the new VPN connection."),
+    name: str = typer.Option(..., help="A name to give the VPN connection."),
     code: Optional[str] = typer.Option(
         None, help="The code provided by `add-client` with started VPN service."
     ),
-    mount: Optional[Path] = typer.Option(
-        None,
-        help="The directory to which to mount the VPN. It must be empty.",
+    sshkey: Path = typer.Option(
+        "~/.ssh/id_ed25519.pub",
+        help="The public key to give the local client during creation. This will be"
+        " used only for local SFTP access.",
     ),
 ):
-    """Configures a new VPN connection with remote filesystem."""
+    """
+    Configures a new VPN connection with remote filesystem. If an existing connection
+    exits with the given name, nothing is done and the existing connection simply
+    reconnects.
+    """
 
     # construct the expected path of the a cached client compose yaml
     yaml = _fingerprint_path(hashable=name) / "client.yaml"
@@ -265,19 +271,6 @@ def connect(
     # if it doesn't exist, copy the template from here, apply the changes, and save it
     if not yaml.exists():
         print("No existing VPN profile found. A new one will be created.")
-
-        # ensure an empty non-reserved directory was given as a mount point
-        if (
-            not mount
-            or not mount.exists()
-            or not mount.is_dir()
-            or len([p for p in mount.iterdir()]) > 0
-        ):
-            typer.secho(
-                "[ X ] You must supply an empty directory for the VPN service to use.",
-                fg=typer.colors.BRIGHT_RED,
-            )
-            raise typer.Exit(code=1)
 
         # check if a code was given
         if not code:
@@ -288,19 +281,21 @@ def connect(
             )
             raise typer.Exit(code=1)
 
+        # check if the there is a local public SSH key
+        sshkey = sshkey.expanduser().absolute()
+        if not sshkey.is_file():
+            typer.secho(
+                "[ X ] You must supply an SSH public key to use for local SFTP.",
+                fg=typer.colors.BRIGHT_RED,
+            )
+            raise typer.Exit(code=1)
+
         yaml.parent.mkdir(parents=True, exist_ok=True)
         templ_yaml = Path(__file__).with_name("client.yaml")
 
         with templ_yaml.open("r") as f:
             template = Template(f.read())
-            yaml.write_text(
-                template.substitute(
-                    {
-                        "MOUNT": str(mount.absolute()),
-                        "FPDIR": str(yaml.parent),
-                    }
-                )
-            )
+            yaml.write_text(template.substitute({"FPDIR": str(yaml.parent)}))
 
         yaml.with_name("vpn-configs").mkdir()
 
@@ -321,11 +316,12 @@ def connect(
                 "blackstrap",
                 "/scripts/install-client.sh",
                 code,
+                sshkey.read_text(),
             ]
         )
 
     # boot the wireguard client and filesystem bridge
-    print("Starting the VPN client. This might take a few more seconds.")
+    print("Restarting the VPN client. This might take a few more seconds.")
     run_command(f"docker compose -f {yaml} down")
     run_command(f"docker compose -f {yaml} up --force-recreate --wait")
 
@@ -345,7 +341,7 @@ def connect(
     )
 
     typer.secho(
-        "\n[ ✔ ] Successfully connected! You should see the remote filesystem at your"
-        " mount point.",
+        "\n[ ✔ ] Successfully connected! The remote filesystem is mounted. You should"
+        " be able to access it via SFTP at `vpn-user@localhost:1111`.",
         fg=typer.colors.GREEN,
     )
