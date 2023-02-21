@@ -10,8 +10,9 @@ services:
       - TZ=America/New_York
     working_dir: /home/vpn-user/remote
     volumes:
-      - ${FPDIR}/vpn-configs:/config
-      - ${FPDIR}/ssh-jail:/root/.ssh
+      - vpn-config:/config
+      - root-ssh:/root/.ssh
+      - vpn-ssh:/home/vpn-user/.ssh
     networks:
       - blackstrap-internal
     ports:
@@ -19,16 +20,17 @@ services:
       - 1111:22/tcp
     privileged: true
     cap_add:
-      - NET_ADMIN
-      # - SYS_MODULE
       - SYS_ADMIN
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
-      - net.ipv4.ip_forward=1
-      - net.ipv6.conf.all.disable_ipv6=1
     devices:
       - /dev/fuse
     restart: unless-stopped
 
 networks:
   blackstrap-internal:
+
+volumes:
+  vpn-config:
+  root-ssh:
+  vpn-ssh:

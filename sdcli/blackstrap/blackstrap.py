@@ -178,6 +178,7 @@ def start(
     if not yaml.exists():
         assert mount
 
+        print("Configuring a new server...")
         yaml.parent.mkdir(parents=True, exist_ok=True)
         templ_yaml = Path(__file__).with_name("server.yaml")
 
@@ -192,7 +193,9 @@ def start(
                 )
             )
 
-        yaml.with_name("vpn-configs").mkdir()
+        templates = yaml.with_name("vpn-config") / "templates"
+        templates.mkdir(parents=True)
+        shutil.copy(templ_yaml.with_name("server.conf"), templates / "server.conf")
         shutil.copy(templ_yaml.with_name("npeers"), yaml.with_name("npeers"))
 
     print("The VPN server is starting. This may take a few seconds.")
@@ -208,12 +211,12 @@ def start(
 
 @blackstrap.command("add-client")
 def add_client(
-    fingerprint: str = typer.Option(
+    to: str = typer.Option(
         ..., help="The fingerprint associated with an existing and live VPN service."
     )
 ):
     """Adds a client to the VPN service associated with the provided fingerprint."""
-    npeers = _fingerprint_path(fingerprint=fingerprint) / "npeers"
+    npeers = _fingerprint_path(fingerprint=to) / "npeers"
 
     # read the npeers file in and increment the number by 1
     num = int(npeers.read_text().split("=")[1]) + 1
@@ -297,8 +300,6 @@ def connect(
             template = Template(f.read())
             yaml.write_text(template.substitute({"FPDIR": str(yaml.parent)}))
 
-        yaml.with_name("vpn-configs").mkdir()
-
         # download the croc package and put the files in the right places
         print("Configuring the VPN profile. This might take a few seconds.")
         subprocess.call(
@@ -315,8 +316,8 @@ def connect(
                 "/config",
                 "blackstrap",
                 "/scripts/install-client.sh",
-                code,
-                sshkey.read_text(),
+                code.strip(),
+                sshkey.read_text().strip(),
             ]
         )
 
