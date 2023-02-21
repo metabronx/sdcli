@@ -22,6 +22,9 @@ services:
       - blackstrap-internal
     ports:
       - 51820:51820/udp
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
     restart: unless-stopped
 
 networks:
