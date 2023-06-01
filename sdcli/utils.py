@@ -1,23 +1,32 @@
+import os
 from contextlib import contextmanager
 from pathlib import Path
 
 import typer
 from cachecontrol import CacheControl
 
-from .tattling_session import TattlingSession
+from .retry_session import RetrySession
 
 
 def _get_creds():
-    output = Path.home() / ".sdcli" / "credentials"
-
-    try:
-        gh_user, gh_password = output.read_text().split("\n")
+    # try to read credentials from environment variables
+    gh_user, gh_password = os.environ.get("GH_USERNAME"), os.environ.get("GH_TOKEN")
+    if gh_user and gh_password:
         return gh_user, gh_password
-    except Exception:
-        typer.secho(
-            "You must login with `sdcli gh auth` first!", fg=typer.colors.BRIGHT_RED
-        )
-        raise typer.Exit(code=1)
+    else:
+        # if envars aren't specified, try to read credentials from file
+        try:
+            output = Path.home() / ".sdcli" / "credentials"
+            gh_user, gh_password = output.read_text().split("\n")
+            return gh_user, gh_password
+        except Exception:
+            typer.secho(
+                "You must login with `sdcli gh auth` first, or supply your username and"
+                " personal access token via the GH_USERNAME and GH_TOKEN environment"
+                " variables!",
+                fg=typer.colors.BRIGHT_RED,
+            )
+            raise typer.Exit(code=1)
 
 
 @contextmanager
@@ -31,7 +40,7 @@ def wrap_ghsession():
     try:
         # create a session that is already authenticated and has the headers
         # required by the GitHub REST API.
-        with TattlingSession() as session:
+        with RetrySession() as session:
             session = CacheControl(session)
             session.headers = {
                 "Accept": "application/vnd.github.v3+json",
