@@ -5,5 +5,10 @@ __pycache__
 
 # builds
 dist
+.pdm-build
+
+# env
+.venv
+.pdm-python
 
 *.csv
