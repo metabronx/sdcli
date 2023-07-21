@@ -5,14 +5,17 @@ from typing import List, Optional
 import typer
 from tqdm import tqdm
 
+from .blackstrap import blackstrap_s3
 from .utils import wrap_ghsession
 
 app = typer.Typer(
     help="A command-line utility for executing essential but laborious tasks.",
-    add_completion=False,
+    no_args_is_help=True,
 )
-gh_app = typer.Typer()
+gh_app = typer.Typer(no_args_is_help=True)
 app.add_typer(gh_app, name="gh", help="Does things with GitHub's v3 REST API.")
+
+app.command(name="s3", no_args_is_help=True)(blackstrap_s3)
 
 
 @gh_app.command("auth")
