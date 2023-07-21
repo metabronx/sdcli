@@ -1,21 +1,23 @@
-[tool.poetry]
+[project]
 name = "sdcli"
-version = "2.1.0rc0"
+version = "2.1.0"
 description = "A command line tool for automating important grunt work."
-authors = ["Elias Gabriel <me@eliasfgabriel.com>"]
-include = ["sdcli/py.typed"]
+authors = [
+    {name = "Elias Gabriel", email = "me@eliasfgabriel.com"},
+]
 
-[tool.poetry.dependencies]
-python = "^3.7"
-typer = {extras = ["all"], version = "^0.3.2"}
-tqdm = "^4.64.0"
-requests = "^2.28.1"
-cachecontrol = "^0.12.11"
+requires-python = ">=3.7,<4.0"
+dependencies = [
+    "typer[all]<1.0.0,>=0.3.2",
+    "tqdm<5.0.0,>=4.64.0",
+    "requests<3.0.0,>=2.28.1",
+    "cachecontrol<1.0.0,>=0.12.11",
+]
 
-[tool.poetry.group.dev.dependencies]
+[project.group.dev.dependencies]
 typer-cli = "^0.0.12"
 
-[tool.poetry.scripts]
+[project.scripts]
 sdcli = "sdcli.main:app"
 
 [tool.isort]
@@ -29,5 +31,5 @@ warn_unreachable = true
 show_column_numbers = true
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
