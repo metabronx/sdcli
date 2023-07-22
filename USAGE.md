@@ -142,7 +142,7 @@ $ sdcli s3 [OPTIONS] COMMAND [ARGS]...
 
 ### `sdcli s3 bridge`
 
-Bridges an S3 object store (bucket) to an SFTP-enabled file system.
+Bridges an S3 object store (bucket) to an SFTP-accessible file system.
 
 **Usage**:
 

@@ -46,7 +46,7 @@ def start_bridge(
         " the `--force-recreate` flag provided Docker Compose.",
     ),
 ):
-    """Bridges an S3 object store (bucket) to an SFTP-enabled file system."""
+    """Bridges an S3 object store (bucket) to an SFTP-accessible file system."""
 
     operation = "start"
 

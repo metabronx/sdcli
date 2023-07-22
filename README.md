@@ -19,10 +19,10 @@ sdcli's commands are organized by the application with which the tool interfaces
 
 ### `sdcli gh`
 
-This does things with GitHub's v3 REST API with the following subcommands:
+This does things with GitHub's v3 REST API via the following subcommands:
 
 - `auth`: Authenticates your machine with GitHub.
-- `invite`: Invites the given email(s) to the metabroxn organization.
+- `invite`: Invites the given email(s) to the metabronx organization.
 - `assign-teams`: Assigns users to their metabronx organization team.
 - `remove`: Removes the given username(s) from the metabronx organization.
 
@@ -40,8 +40,7 @@ $ sdcli gh auth
 
 #### `sdcli gh assign-teams`
 
-Assigns each user to their metabronx GitHub organization team using the
-provided CSV.
+Assigns each user to their metabronx GitHub organization team using the provided CSV.
 
 If the authenticated user is an organization Owner, and the users to assign are not already a part of the organization, they will also receive invites. Upon acceptance, they will be assigned to the team in the CSV.
 
@@ -99,6 +98,61 @@ $ sdcli gh remove [OPTIONS] [USERNAME]
 
 - `--from-file FILENAME`: A line-delimited text file of usernames to remove. This option is mutually exclusive with supplying a single username.
 
+### `sdcli s3` [🏴‍☠️]
+
+This does things with Amazon AWS S3 via the following subcommands:
+
+- `bridge`: Exposes S3 via a local SFTP connection (a "bridge").
+- `stop-bridge`: Shuts down a bridge.
+- `remove-bridge`: Shuts down and removes all data for a bridge.
+
+#### `sdcli s3 bridge`
+
+Bridges an S3 object store (bucket) to an SFTP-accessible file system.
+
+**Usage**:
+
+```console
+$ sdcli s3 bridge [OPTIONS]
+```
+
+**Options**:
+
+* `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.
+* `--bucket TEXT`: The bucket to expose via SFTP. This option is mutually exclusive with `--fingerprint`. When you supply this for the first time, you must also supply credentials.
+* `--access-key-id TEXT`: Your AWS Access Key ID. This must be supplied when first connectingto a bucket.
+* `--secret-access-key TEXT`: Your AWS Secret Access Key. This must be supplied when first connecting to a bucket.
+* `--ssh-pubkey PATH`: Your public SSH key. This must be supplied when first connecting to abucket, and will only ever be used for local SFTP access.  [default: ~/.ssh/id_ed25519.pub]
+* `--force-restart`: By default, existing S3 bridges will not be restarted if they're already running. Specify this flag to override this behavior. This is equivalent to the `--force-recreate` flag provided Docker Compose.
+
+#### `sdcli s3 stop-bridge`
+
+Shuts down an existing S3 bridge.
+
+**Usage**:
+
+```console
+$ sdcli s3 stop-bridge [OPTIONS]
+```
+
+**Options**:
+
+* `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.  [required]
+
+#### `sdcli s3 delete-bridge`
+
+Shuts down and removes an existing S3 bridge.
+
+**Usage**:
+
+```console
+$ sdcli s3 delete-bridge [OPTIONS]
+```
+
+**Options**:
+
+* `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.  [required]
+
 ## License
 
-License here.
+Elias
