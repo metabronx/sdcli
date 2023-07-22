@@ -1,6 +1,6 @@
 services:
   s3fs:
-    container_name: blackstrap_bridge_${AWS_S3_BUCKET}
+    container_name: blackstrap_bridge_${FINGERPRINT}
     image: ghcr.io/metabronx/blackstrap-s3
     cap_add:
       - SYS_ADMIN
