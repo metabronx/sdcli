@@ -14,11 +14,21 @@ dependencies = [
     "cachecontrol<1.0.0,>=0.12.11",
 ]
 
-[project.group.dev.dependencies]
-typer-cli = "^0.0.12"
+[project.urls]
+homepage = "https://www.metabronx.com/"
+documentation = "https://github.com/metabronx/sdcli"
+repository = "https://github.com/metabronx/sdcli"
+
+[tool.pdm.scripts]
+docs = "typer sdcli.main utils docs --name sdcli --output USAGE.md"
 
 [project.scripts]
 sdcli = "sdcli.main:app"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "typer-cli>=0.0.13"
+]
 
 [tool.isort]
 profile = "black"
