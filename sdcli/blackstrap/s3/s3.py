@@ -31,7 +31,7 @@ def start_bridge(
     access_key_id: Optional[str] = typer.Option(
         None,
         help="Your AWS Access Key ID. This must be supplied when first connecting"
-        "to a bucket.",
+        " to a bucket.",
     ),
     secret_access_key: Optional[str] = typer.Option(
         None,

@@ -120,9 +120,8 @@ $ sdcli s3 bridge [OPTIONS]
 
 * `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.
 * `--bucket TEXT`: The bucket to expose via SFTP. This option is mutually exclusive with `--fingerprint`. When you supply this for the first time, you must also supply credentials.
-* `--access-key-id TEXT`: Your AWS Access Key ID. This must be supplied when first connectingto a bucket.
+* `--access-key-id TEXT`: Your AWS Access Key ID. This must be supplied when first connecting to a bucket.
 * `--secret-access-key TEXT`: Your AWS Secret Access Key. This must be supplied when first connecting to a bucket.
-* `--ssh-pubkey PATH`: Your public SSH key. This must be supplied when first connecting to abucket, and will only ever be used for local SFTP access.  [default: ~/.ssh/id_ed25519.pub]
 * `--force-restart`: By default, existing S3 bridges will not be restarted if they're already running. Specify this flag to override this behavior. This is equivalent to the `--force-recreate` flag provided Docker Compose.
 
 #### `sdcli s3 stop-bridge`
