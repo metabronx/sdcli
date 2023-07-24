@@ -1,3 +1,5 @@
+version: "3"
+
 services:
   s3fs:
     container_name: blackstrap_bridge_${FINGERPRINT}
