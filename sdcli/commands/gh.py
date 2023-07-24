@@ -11,7 +11,7 @@ gh = typer.Typer()
 
 
 @gh.command(no_args_is_help=True)
-def login():
+def login() -> None:
     """
     yourself. To avoid saving your credentials on your host machine, you may export
     the GH_USERNAME and GH_TOKEN environment variable or pass them to every command.
@@ -56,7 +56,7 @@ def invite(
         help="A line-delimited text file of email address to invite. This option "
         "is mutually exclusive with supplying a single email address.",
     ),
-):
+) -> None:
     """
     Invites the given email or list of emails to the metabronx GitHub organization. A
     list of emails must be a UTF-8 text file, where each email is on a separate line.
@@ -85,7 +85,7 @@ def invite(
             )
             team_ids = [t["id"] for t in resp.json() if t["slug"] in team]
 
-        def _invite(email: str):
+        def _invite(email: str) -> None:
             # create an invitation for the specified email with a default "member"
             # role in the organization and, if supplied, teams.
             session.post(
@@ -129,7 +129,7 @@ def assign_teams(
         ...,
         help="A csv text file of usernames and team memberships, without a header.",
     ),
-):
+) -> None:
     """
     Assigns each user to their metabronx GitHub organization team using the
     provided CSV.
@@ -139,7 +139,7 @@ def assign_teams(
     # assign all teamships
     with wrap_ghsession() as session:
 
-        def _assign(username: str, team: str):
+        def _assign(username: str, team: str) -> None:
             # assign the specified user to the given team as a member
             session.put(
                 "https://api.github.com"
@@ -180,7 +180,7 @@ def remove(
         help="A line-delimited text file of usernames to remove. This option "
         "is mutually exclusive with supplying a single username.",
     ),
-):
+) -> None:
     """
     Removes the given username or list of usernames from the metabronx GitHub
     organization. A list of usernames must be a text file, where each username is on a
@@ -197,7 +197,7 @@ def remove(
     # invite all members
     with wrap_ghsession() as session:
 
-        def _remove(username: str):
+        def _remove(username: str) -> None:
             # remove the specified username from the organization, or cancel a pending
             # invitation. this will send an email notification.
             session.delete(f"https://api.github.com/orgs/metabronx/members/{username}")

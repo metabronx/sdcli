@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-toml
+      - id: check-yaml
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.0.263
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+        language_version: python3.7
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.2.0
+    hooks:
+      - id: mypy
+        require_serial: true
+        additional_dependencies: [
+          "typer[all]<1.0.0,>=0.3.2",
+          "tqdm<5.0.0,>=4.64.0",
+          "requests<3.0.0,>=2.28.1",
+          "types-requests",
+          "cachecontrol<1.0.0,>=0.12.11",
+        ]

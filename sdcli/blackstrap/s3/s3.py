@@ -1,7 +1,8 @@
 import shutil
 from pathlib import Path
 from string import Template
-from typing import Optional
+from subprocess import CompletedProcess
+from typing import Optional, cast
 
 import typer
 
@@ -45,7 +46,7 @@ def start_bridge(
         " running. Specify this flag to override this behavior. This is equivalent to"
         " the `--force-recreate` flag provided Docker Compose.",
     ),
-):
+) -> None:
     """Bridges an S3 object store (bucket) to an SFTP-accessible file system."""
 
     operation = "start"
@@ -81,7 +82,10 @@ def start_bridge(
     else:
         print("Existing S3 bridge configuration found.")
         if not force_restart:
-            containers = run_command('docker ps --format "{{.Names}}"', capture=True)
+            containers = cast(
+                CompletedProcess[str],
+                run_command('docker ps --format "{{.Names}}"', capture=True),
+            )
             if f"blackstrap_bridge_{det_fingerprint}" in containers.stdout:
                 typer.secho(
                     "\n[ ! ] Your S3 bridge is already running!\n      If you intended"
@@ -111,7 +115,7 @@ def stop_bridge(
         help="The fingerprint associated with an existing SFTP-bucket bridge. This"
         " option is mutually exclusive with all other options.",
     )
-):
+) -> None:
     """Shuts down an existing S3 bridge."""
     _, fp_path = fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
     yaml = fp_path / "docker-compose.yaml"
@@ -133,7 +137,7 @@ def remove_bridge(
         help="The fingerprint associated with an existing SFTP-bucket bridge. This"
         " option is mutually exclusive with all other options.",
     )
-):
+) -> None:
     """Shuts down and removes an existing S3 bridge."""
     _, fp_path = fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
     yaml = fp_path / "docker-compose.yaml"

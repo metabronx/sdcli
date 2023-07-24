@@ -4,7 +4,7 @@ import shutil
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
-from typing import List, Optional, Tuple, Union
+from typing import Iterator, List, Optional, Tuple, Union, cast
 
 import typer
 from cachecontrol import CacheControl
@@ -12,7 +12,7 @@ from cachecontrol import CacheControl
 from .retry_session import RetrySession
 
 
-def _get_creds():
+def _get_creds() -> Tuple[str, str]:
     # try to read credentials from environment variables
     gh_user, gh_password = os.environ.get("GH_USERNAME"), os.environ.get("GH_TOKEN")
     if gh_user and gh_password:
@@ -34,7 +34,7 @@ def _get_creds():
 
 
 @contextmanager
-def wrap_ghsession():
+def wrap_ghsession() -> Iterator[RetrySession]:
     """
     Wraps the function within an GH authenticated requests session. Useful for doing
     tons of sequential api calls.
@@ -45,13 +45,13 @@ def wrap_ghsession():
         # create a session that is already authenticated and has the headers
         # required by the GitHub REST API.
         with RetrySession() as session:
-            session = CacheControl(session)
-            session.headers = {
+            cc_session: RetrySession = cast(RetrySession, CacheControl(session))
+            cc_session.headers = {
                 "Accept": "application/vnd.github.v3+json",
                 "User-Agent": "sdcli",
             }
-            session.auth = (gh_user, gh_pat)
-            yield session
+            cc_session.auth = (gh_user, gh_pat)
+            yield cc_session
     except Exception:
         typer.secho(
             "\n[ X ] Something went wrong communicating with GitHub.\n",
@@ -62,7 +62,7 @@ def wrap_ghsession():
 
 def run_command(
     command: Union[str, List[str]], capture: bool = False, exit_on_error: bool = True
-):
+) -> Optional[CompletedProcess[str]]:
     """
     Run an arbitrary command with arbitrary arguments and return the CompletedProcess.
     STDERR is captured and formatted upon unsuccessful command execution, either at the
@@ -71,7 +71,7 @@ def run_command(
     if isinstance(command, str):
         command = command.split(" ")
 
-    process: Optional[CompletedProcess] = None
+    process: Optional[CompletedProcess[str]] = None
     try:
         # try to the provided command as a subprocess, capturing
         # the stderr if the command fails
@@ -108,7 +108,7 @@ def run_command(
         return process
 
 
-def is_docker_supported():
+def is_docker_supported() -> None:
     """Checks if Docker and Docker Compose exist on the system and are running."""
     try:
         run_command("docker version", capture=True, exit_on_error=False)
@@ -128,7 +128,7 @@ def is_docker_supported():
         raise typer.Exit(code=1)
 
 
-def validate_compose_yaml(yaml: Union[str, Path], fingerprint_path: Path):
+def validate_compose_yaml(yaml: Union[str, Path], fingerprint_path: Path) -> None:
     """
     Checks if the provided yaml is valid for the installed version of Docker Compose.
     """
@@ -153,7 +153,7 @@ def validate_compose_yaml(yaml: Union[str, Path], fingerprint_path: Path):
 def fingerprint_path(
     *service: str,
     fingerprint: Optional[str] = None,
-    hashable: Tuple[Optional[str]] = (),
+    hashable: Tuple[Optional[str], ...] = (),
 ) -> Tuple[str, Path]:
     """
     Returns the cache path for a given fingerprint or hashable under the provided
@@ -178,7 +178,9 @@ def fingerprint_path(
     det_fingerprint = (
         fingerprint
         # we need predictable results between interpreters, which hash() won't provide
-        or hashlib.md5("|".join(hashable).encode(), usedforsecurity=False).hexdigest()
+        or hashlib.md5(
+            "|".join(cast(Tuple[str, ...], hashable)).encode(), usedforsecurity=False
+        ).hexdigest()
     )
 
     path = Path.home().joinpath(
