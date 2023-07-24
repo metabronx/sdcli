@@ -100,7 +100,7 @@ def start_bridge(
             operation = f"re{operation}"
 
     print(f"Your S3 bridge is {operation}ing. This may take a few seconds.")
-    run_command(f"docker-compose -f {yaml} up --wait --force-recreate")
+    run_command(f"docker-compose -f {yaml} up -d --force-recreate")
 
     typer.secho(
         f"\n[ ✔ ] Successfully {operation}ed your S3 bridge!\n      The service has the"
