@@ -1,8 +1,9 @@
 import hashlib
 import os
+import shutil
 from contextlib import contextmanager
 from pathlib import Path
-from subprocess import PIPE, CalledProcessError, run
+from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import List, Optional, Tuple, Union
 
 import typer
@@ -59,7 +60,9 @@ def wrap_ghsession():
         raise typer.Exit(code=1)
 
 
-def run_command(command: Union[str, List[str]], capture: bool = False):
+def run_command(
+    command: Union[str, List[str]], capture: bool = False, exit_on_error: bool = True
+):
     """
     Run an arbitrary command with arbitrary arguments and return the CompletedProcess.
     STDERR is captured and formatted upon unsuccessful command execution, either at the
@@ -68,10 +71,11 @@ def run_command(command: Union[str, List[str]], capture: bool = False):
     if isinstance(command, str):
         command = command.split(" ")
 
+    process: Optional[CompletedProcess] = None
     try:
         # try to the provided command as a subprocess, capturing
         # the stderr if the command fails
-        return run(
+        process = run(
             command,
             text=True,
             stdout=(capture and PIPE) or None,
@@ -79,6 +83,9 @@ def run_command(command: Union[str, List[str]], capture: bool = False):
             check=True,
         )
     except Exception as err:
+        if not exit_on_error:
+            raise err
+
         # if the command failed, we only care about its stderr
         if isinstance(err, CalledProcessError):
             err = err.stderr
@@ -97,20 +104,47 @@ def run_command(command: Union[str, List[str]], capture: bool = False):
             + errmsg
         )
         raise typer.Exit(code=1)
+    else:
+        return process
 
 
 def is_docker_supported():
     """Checks if Docker and Docker Compose exist on the system and are running."""
     try:
-        run_command("docker version", capture=True)
-        docker_check = run_command("docker-compose --version", capture=True)
+        run_command("docker version", capture=True, exit_on_error=False)
+        docker_check = run_command(
+            "docker-compose --version", capture=True, exit_on_error=False
+        )
     except (CalledProcessError, FileNotFoundError):
         docker_check = None
 
     if not docker_check or docker_check.returncode != 0:
         typer.secho(
             "[ X ] Docker Compose is not available but is required. Ensure Docker is"
-            " running and Docker Compose is installed before continuing.",
+            " running and Docker Compose is installed before continuing.\n      For"
+            " compatibility, sdcli assumes the `docker-compose` command is available.",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        raise typer.Exit(code=1)
+
+
+def validate_compose_yaml(yaml: Union[str, Path], fingerprint_path: Path):
+    """
+    Checks if the provided yaml is valid for the installed version of Docker Compose.
+    """
+    try:
+        run_command(
+            f"docker-compose -f {yaml} config -o {yaml}",
+            capture=True,
+            exit_on_error=False,
+        )
+    except CalledProcessError:
+        fingerprint = fingerprint_path.stem
+        shutil.rmtree(fingerprint_path)
+        typer.secho(
+            f"[ X ] The services configuration file with fingerprint '{fingerprint}' is"
+            " not compatible with your version of Docker Compose. Please upgrade your"
+            " Docker and Docker Compose versions, then try again.",
             fg=typer.colors.BRIGHT_RED,
         )
         raise typer.Exit(code=1)

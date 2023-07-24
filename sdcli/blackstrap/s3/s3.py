@@ -5,7 +5,12 @@ from typing import Optional
 
 import typer
 
-from sdcli.utils import fingerprint_path, is_docker_supported, run_command
+from sdcli.utils import (
+    fingerprint_path,
+    is_docker_supported,
+    run_command,
+    validate_compose_yaml,
+)
 
 s3 = typer.Typer(callback=is_docker_supported)
 
@@ -85,6 +90,10 @@ def start_bridge(
                     }
                 )
             )
+
+        # validate and normalize the generated yaml. this helps catch version mismatches
+        # between the template and the locally installed compose version
+        validate_compose_yaml(yaml, fp_path)
     else:
         print("Existing S3 bridge configuration found.")
         if not force_restart:

@@ -16,3 +16,4 @@ services:
       - AWS_S3_SECRET_ACCESS_KEY=${AWS_S3_SECRET_ACCESS_KEY}
     volumes:
       - ${SSH_PUBKEY}:/etc/ssh/host_pubkey
+    restart: unless-stopped
