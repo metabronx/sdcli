@@ -100,7 +100,7 @@ def start_bridge(
             operation = f"re{operation}"
 
     print(f"Your S3 bridge is {operation}ing. This may take a few seconds.")
-    run_command(f"docker compose -f {yaml} up --wait --force-recreate")
+    run_command(f"docker-compose -f {yaml} up --wait --force-recreate")
 
     typer.secho(
         f"\n[ ✔ ] Successfully {operation}ed your S3 bridge!\n      The service has the"
@@ -129,7 +129,7 @@ def stop_bridge(
     yaml = fp_path / "docker-compose.yaml"
 
     print("Shutting down your S3 bridge...")
-    run_command(f"docker compose -f {yaml} down --volumes")
+    run_command(f"docker-compose -f {yaml} down --volumes")
 
     typer.secho(
         "\n[ ✔ ] Successfully stopped your S3 bridge.\n      You can restart it"
@@ -151,7 +151,7 @@ def remove_bridge(
     yaml = fp_path / "docker-compose.yaml"
 
     print("Removing your S3 bridge...")
-    run_command(f"docker compose -f {yaml} down --volumes")
+    run_command(f"docker-compose -f {yaml} down --volumes")
     shutil.rmtree(fp_path)
 
     typer.secho("\n[ ✔ ] Successfully removed your S3 bridge.", fg=typer.colors.GREEN)

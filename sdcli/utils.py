@@ -100,17 +100,17 @@ def run_command(command: Union[str, List[str]], capture: bool = False):
 
 
 def is_docker_supported():
-    """Checks if Docker and Docker Compose 2 exist on the system and are running."""
+    """Checks if Docker and Docker Compose exist on the system and are running."""
     try:
         run_command("docker version", capture=True)
-        docker_check = run_command("docker compose version", capture=True)
+        docker_check = run_command("docker-compose --version", capture=True)
     except (CalledProcessError, FileNotFoundError):
         docker_check = None
 
     if not docker_check or docker_check.returncode != 0:
         typer.secho(
-            "[ X ] Docker Compose V2 is not available but is required. Ensure Docker is"
-            " running and Docker Compose V2 is installed before continuing.",
+            "[ X ] Docker Compose is not available but is required. Ensure Docker is"
+            " running and Docker Compose is installed before continuing.",
             fg=typer.colors.BRIGHT_RED,
         )
         raise typer.Exit(code=1)
