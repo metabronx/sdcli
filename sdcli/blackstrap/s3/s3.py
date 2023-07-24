@@ -38,11 +38,6 @@ def start_bridge(
         help="Your AWS Secret Access Key. This must be supplied when first"
         " connecting to a bucket.",
     ),
-    ssh_pubkey: Path = typer.Option(
-        "~/.ssh/id_ed25519.pub",
-        help="Your public SSH key. This must be supplied when first connecting to a"
-        "bucket, and will only ever be used for local SFTP access.",
-    ),
     force_restart: bool = typer.Option(
         False,
         "--force-restart",
@@ -64,16 +59,6 @@ def start_bridge(
     yaml = fp_path / "docker-compose.yaml"
     if not yaml.exists():
         print("New bucket information provided. Configuring a new bridge...")
-
-        # check if the there is a local public SSH key
-        ssh_pubkey = ssh_pubkey.expanduser().resolve()
-        if not ssh_pubkey.is_file():
-            typer.secho(
-                "[ X ] You must supply an SSH public key to use for local SFTP.",
-                fg=typer.colors.BRIGHT_RED,
-            )
-            raise typer.Exit(code=1)
-
         yaml.parent.mkdir(parents=True, exist_ok=True)
         templ_yaml = Path(__file__).with_name("docker-compose.yaml")
 
@@ -85,7 +70,6 @@ def start_bridge(
                         "AWS_S3_BUCKET": bucket,
                         "AWS_S3_ACCESS_KEY_ID": access_key_id,
                         "AWS_S3_SECRET_ACCESS_KEY": secret_access_key,
-                        "SSH_PUBKEY": str(ssh_pubkey),
                         "FINGERPRINT": det_fingerprint,
                     }
                 )
@@ -129,12 +113,7 @@ def stop_bridge(
     )
 ):
     """Shuts down an existing S3 bridge."""
-    _, fp_path = fingerprint_path(
-        "blackstrap",
-        "s3",
-        fingerprint=fingerprint,
-        hashable=None,
-    )
+    _, fp_path = fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
     yaml = fp_path / "docker-compose.yaml"
 
     print("Shutting down your S3 bridge...")
@@ -142,7 +121,7 @@ def stop_bridge(
 
     typer.secho(
         "\n[ ✔ ] Successfully stopped your S3 bridge.\n      You can restart it"
-        " with the `bridge` command.",
+        " by providing your fingerprint to the `bridge` command.",
         fg=typer.colors.GREEN,
     )
 
