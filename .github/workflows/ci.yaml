@@ -17,4 +17,4 @@ jobs:
         with:
           python-version:  ${{ matrix.python-version }}
       - name: Check styling and typing
-        uses: pre-commit/action@v3
+        uses: pre-commit/action@v3.0.0
