@@ -4,7 +4,8 @@
 
 A command-line utility for executing essential but laborious tasks.
 
-Tested support on Python 3.7, 3.8, 3.9, and 3.10, 3.11 on macOS, Windows, and Linux.
+Tested support on Python 3.7, 3.8, 3.9 3.10, and 3.11 on macOS, Windows, and Linux.  
+Operating system versions are controlled by [GitHub Actions](https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#choosing-github-hosted-runners).
 
 ## Installation
 
