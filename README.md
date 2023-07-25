@@ -4,12 +4,14 @@
 
 A command-line utility for executing essential but laborious tasks.
 
+Tested support on Python 3.7, 3.8, 3.9, and 3.10, 3.11 on macOS, Windows, and Linux.
+
 ## Installation
 
 You can install this package via pip:
 
 ```sh
-$ pip install git+ssh//git@github.com:metabronx/sdcli.git
+$ pip install git+ssh://git@github.com:metabronx/sdcli.git
 $ sdcli --help
 ```
 

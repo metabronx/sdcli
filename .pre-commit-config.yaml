@@ -10,7 +10,7 @@ repos:
       - id: ruff
         args: ["--fix", "--exit-non-zero-on-fix"]
   - repo: https://github.com/psf/black
-    rev: 23.7.0
+    rev: 23.3.0 # last runtime support for 3.7
     hooks:
       - id: black
   - repo: https://github.com/pre-commit/mirrors-mypy
