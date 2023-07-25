@@ -1,5 +1,6 @@
 import hashlib
 import os
+import platform
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
@@ -10,6 +11,10 @@ import typer
 from cachecontrol import CacheControl
 
 from .retry_session import RetrySession
+
+HASHLIB_KWARGS = {}
+if int(platform.python_version_tuple()[1]) >= 9:
+    HASHLIB_KWARGS["usedforsecurity"] = False
 
 
 def _get_creds() -> Tuple[str, str]:
@@ -179,7 +184,7 @@ def fingerprint_path(
         fingerprint
         # we need predictable results between interpreters, which hash() won't provide
         or hashlib.md5(
-            "|".join(cast(Tuple[str, ...], hashable)).encode(), usedforsecurity=False
+            "|".join(cast(Tuple[str, ...], hashable)).encode(), **HASHLIB_KWARGS
         ).hexdigest()
     )
 
