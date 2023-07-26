@@ -10,7 +10,7 @@ from ..utils import wrap_ghsession
 gh = typer.Typer()
 
 
-@gh.command(no_args_is_help=True)
+@gh.command()
 def login() -> None:
     """
     yourself. To avoid saving your credentials on your host machine, you may export
@@ -25,8 +25,8 @@ def login() -> None:
     )
 
     # prompt for username and PAT
-    username = typer.prompt("  Username")
-    personal_access_token = typer.prompt("  Personal access token")
+    username = typer.prompt("Username")
+    personal_access_token = typer.prompt("Personal access token")
 
     # write the credentials to a cache directory in the user's home directory
     output = Path.home() / ".sdcli" / "credentials"
@@ -78,12 +78,11 @@ def invite(
         # fetch team IDs to pass to through during user invitation. it's easier
         # (and faster) to fetch ALL our organization teams and then to filter them,
         # rather than fetching each concurrently.
-        if team:
-            resp = session.get(
-                "https://api.github.com/orgs/metabronx/teams",
-                params={"per_page": 100},
-            )
-            team_ids = [t["id"] for t in resp.json() if t["slug"] in team]
+        resp = session.get(
+            "https://api.github.com/orgs/metabronx/teams",
+            params={"per_page": 100},
+        )
+        team_ids = [t["id"] for t in resp.json() if t["slug"] in team]
 
         def _invite(email: str) -> None:
             # create an invitation for the specified email with a default "member"
@@ -144,15 +143,13 @@ def assign_teams(
             session.put(
                 "https://api.github.com"
                 f"/orgs/metabronx/teams/{team}/memberships/{username}",
-                json={
-                    "role": "member",
-                },
+                json={"role": "member"},
             )
 
         # read and submit all the team assignments
         assignments = [(ts[0], ts[1]) for ts in teamships]
-        # do all the team assignments in parallel
         typer.echo()
+        # do all the team assignments
         for user, slug in tqdm(
             assignments,
             desc="Assigning teamships for all the provided users",

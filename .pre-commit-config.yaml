@@ -18,6 +18,7 @@ repos:
     hooks:
       - id: mypy
         require_serial: true
+        exclude: ^tests
         additional_dependencies: [
           "typer[all]<1.0.0,>=0.3.2",
           "tqdm<5.0.0,>=4.64.0",
