@@ -37,7 +37,7 @@ docs = "typer sdcli.main utils docs --name sdcli --output USAGE.md"
 strict = true
 
 [tool.pytest.ini_options]
-addopts = "-svv"
+addopts = "--capture=fd -vv"
 testpaths = [ "tests" ]
 
 [build-system]
