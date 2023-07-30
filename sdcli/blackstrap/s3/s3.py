@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import shutil
 from pathlib import Path
 from string import Template
+from subprocess import CompletedProcess
 from typing import Optional, cast
 
 import typer
 
-from sdcli.compat import CompletedProcess
 from sdcli.utils import (
     fingerprint_path,
     is_docker_supported,
@@ -83,7 +85,7 @@ def start_bridge(
         print("Existing S3 bridge configuration found.")
         if not force_restart:
             containers = cast(
-                CompletedProcess,
+                CompletedProcess[str],
                 run_command('docker ps --format "{{.Names}}"', capture=True),
             )
             if f"blackstrap_bridge_{det_fingerprint}" in containers.stdout:

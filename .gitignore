@@ -9,6 +9,7 @@ dist
 .pdm-build
 
 # env
+__pypackages__
 .venv
 .pdm-python
 
