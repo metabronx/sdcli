@@ -1,19 +1,20 @@
 import hashlib
 import os
-import platform
 import shutil
+import sys
 from contextlib import contextmanager
 from pathlib import Path
-from subprocess import PIPE, CalledProcessError, CompletedProcess, run
+from subprocess import PIPE, CalledProcessError, run
 from typing import Iterator, List, Optional, Tuple, Union, cast
 
 import typer
 from cachecontrol import CacheControl
 
+from .compat import CompletedProcess
 from .retry_session import RetrySession
 
 HASHLIB_KWARGS = {}
-if int(platform.python_version_tuple()[1]) >= 9:
+if sys.version_info >= (3, 9):
     HASHLIB_KWARGS["usedforsecurity"] = False
 
 
@@ -67,7 +68,7 @@ def wrap_ghsession() -> Iterator[RetrySession]:
 
 def run_command(
     command: Union[str, List[str]], capture: bool = False, exit_on_error: bool = True
-) -> Optional[CompletedProcess[str]]:
+) -> Optional[CompletedProcess]:
     """
     Run an arbitrary command with arbitrary arguments and return the CompletedProcess.
     STDERR is captured and formatted upon unsuccessful command execution, either at the
@@ -76,7 +77,7 @@ def run_command(
     if isinstance(command, str):
         command = command.split(" ")
 
-    process: Optional[CompletedProcess[str]] = None
+    process: Optional[CompletedProcess] = None
     try:
         # try to the provided command as a subprocess, capturing
         # the stderr if the command fails
