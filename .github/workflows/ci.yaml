@@ -22,3 +22,26 @@ jobs:
           python-version:  ${{ matrix.python-version }}
       - name: Check styling and typing
         uses: pre-commit/action@v2.0.3  # last support for 3.7
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
+        os: [
+          macos-11, macos-12, macos-13,
+          ubuntu-20.04, ubuntu-22.04,
+          windows-2019, windows-2022
+        ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: true
+      - name: Install dependencies
+        run: pdm install -G :all
+      - name: Run tests
+        run: pdm run pytest
