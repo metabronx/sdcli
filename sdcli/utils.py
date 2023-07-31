@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import os
-import shutil
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -135,28 +134,6 @@ def is_docker_supported() -> None:
         raise typer.Exit(code=1)
 
 
-def validate_compose_yaml(yaml: Union[str, Path], fingerprint_path: Path) -> None:
-    """
-    Checks if the provided yaml is valid for the installed version of Docker Compose.
-    """
-    try:
-        run_command(
-            f"docker-compose -f {yaml} config -o {yaml}",
-            capture=True,
-            exit_on_error=False,
-        )
-    except CalledProcessError:
-        fingerprint = fingerprint_path.stem
-        shutil.rmtree(fingerprint_path)
-        typer.secho(
-            f"[ X ] The services configuration file with fingerprint '{fingerprint}' is"
-            " not compatible with your version of Docker Compose. Please upgrade your"
-            " Docker and Docker Compose versions, then try again.",
-            fg=typer.colors.BRIGHT_RED,
-        )
-        raise typer.Exit(code=1)
-
-
 def fingerprint_path(
     *service: str,
     fingerprint: Optional[str] = None,
@@ -204,3 +181,46 @@ def fingerprint_path(
         raise typer.Exit(code=1)
 
     return det_fingerprint, path
+
+
+def validate_compose_yaml(yaml: Path, fingerprint_path: Path) -> None:
+    """
+    Checks if the provided yaml is valid for the installed version of Docker Compose.
+    """
+    try:
+        run_command(
+            f"docker-compose -f {yaml} config -o {yaml} --bananas",
+            capture=True,
+            exit_on_error=False,
+        )
+    except CalledProcessError as e:
+        # write log
+        yaml.with_name("validation.log").write_text(
+            f"==> {' '.join(e.cmd)}\n\n{e.stderr}"
+        )
+        # copy invalid config
+        yaml.replace(yaml.with_name("docker-compose.yaml.invalid"))
+        # print message
+        fingerprint = fingerprint_path.stem
+        typer.secho(
+            f"[ X ] The service configuration file with fingerprint '{fingerprint}'"
+            " could not be validated.\n      This is probably due to an compatibility"
+            " with your version of Docker Compose. Please try upgrading your Docker and"
+            " Docker Compose versions, then try again.\n      If you believe this is an"
+            " error, the invalid configuration file and error log are still available"
+            f" at:\n      '{fingerprint_path}'",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        raise typer.Exit(code=1)
+
+
+def is_container_running(container_name: str) -> bool:
+    """
+    Checks if the given container is running. Checks are by prefix, so if you intend to
+    target a specific container ensure the name is unique.
+    """
+    containers = cast(
+        CompletedProcess[str],
+        run_command('docker ps --format "{{.Names}}"', capture=True),
+    )
+    return container_name in containers.stdout

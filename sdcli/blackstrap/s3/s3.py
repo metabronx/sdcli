@@ -1,15 +1,13 @@
-from __future__ import annotations
-
 import shutil
 from pathlib import Path
 from string import Template
-from subprocess import CompletedProcess
-from typing import Optional, cast
+from typing import Optional
 
 import typer
 
 from sdcli.utils import (
     fingerprint_path,
+    is_container_running,
     is_docker_supported,
     run_command,
     validate_compose_yaml,
@@ -61,6 +59,16 @@ def start_bridge(
     )
     yaml = fp_path / "docker-compose.yaml"
     if not yaml.exists():
+        if fingerprint:
+            typer.secho(
+                "[ X ] The fingerprint provided exists but the underlying bridge"
+                " configuration file is missing. This should never happen.\n      "
+                "To fix this, please rerun the command providing the bucket, access"
+                " key, and secret instead.",
+                fg=typer.colors.BRIGHT_RED,
+            )
+            raise typer.Exit(code=1)
+
         print("New bucket information provided. Configuring a new bridge...")
         yaml.parent.mkdir(parents=True, exist_ok=True)
         templ_yaml = Path(__file__).with_name("docker-compose.yaml")
@@ -83,18 +91,13 @@ def start_bridge(
         validate_compose_yaml(yaml, fp_path)
     else:
         print("Existing S3 bridge configuration found.")
-        if not force_restart:
-            containers = cast(
-                CompletedProcess[str],
-                run_command('docker ps --format "{{.Names}}"', capture=True),
+        if not force_restart and is_container_running(det_fingerprint):
+            typer.secho(
+                "\n[ ! ] Your S3 bridge is already running!\n      If you intended to"
+                " force a restart, you must specify the --force-restart option.",
+                fg=typer.colors.YELLOW,
             )
-            if f"blackstrap_bridge_{det_fingerprint}" in containers.stdout:
-                typer.secho(
-                    "\n[ ! ] Your S3 bridge is already running!\n      If you intended"
-                    " to force a restart, you must specify the --force-restart option.",
-                    fg=typer.colors.YELLOW,
-                )
-                raise typer.Exit(code=1)
+            raise typer.Exit(code=1)
         else:
             operation = f"re{operation}"
 
@@ -112,7 +115,7 @@ def start_bridge(
 
 @s3.command("stop-bridge", no_args_is_help=True)
 def stop_bridge(
-    fingerprint: str = typer.Option(
+    fingerprint: str = typer.Argument(
         ...,
         help="The fingerprint associated with an existing SFTP-bucket bridge. This"
         " option is mutually exclusive with all other options.",
@@ -122,11 +125,24 @@ def stop_bridge(
     _, fp_path = fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
     yaml = fp_path / "docker-compose.yaml"
 
+    if not is_container_running(fingerprint):
+        typer.secho("\n[ ! ] Your S3 bridge is not running.", fg=typer.colors.YELLOW)
+        raise typer.Exit(code=1)
+    elif not yaml.exists():
+        typer.secho(
+            "\n[ X ] Your S3 bridge is running, but its underlying configuration file"
+            " is missing.\n      This should never happen, and usually indicates"
+            "mischief. You will have to manually stop your bridge via `docker stop`"
+            " instead.",
+            fg=typer.colors.BRIGHT_RED,
+        )
+        raise typer.Exit(code=1)
+
     print("Shutting down your S3 bridge...")
-    run_command(f"docker-compose -f {yaml} down --volumes")
+    run_command(f"docker-compose -f {yaml} stop")
 
     typer.secho(
-        "\n[ ✔ ] Successfully stopped your S3 bridge.\n      You can restart it"
+        "[ ✔ ] Successfully stopped your S3 bridge.\n      You can restart it"
         " by providing your fingerprint to the `bridge` command.",
         fg=typer.colors.GREEN,
     )
@@ -134,7 +150,7 @@ def stop_bridge(
 
 @s3.command("delete-bridge", no_args_is_help=True)
 def remove_bridge(
-    fingerprint: str = typer.Option(
+    fingerprint: str = typer.Argument(
         ...,
         help="The fingerprint associated with an existing SFTP-bucket bridge. This"
         " option is mutually exclusive with all other options.",
@@ -145,7 +161,11 @@ def remove_bridge(
     yaml = fp_path / "docker-compose.yaml"
 
     print("Removing your S3 bridge...")
-    run_command(f"docker-compose -f {yaml} down --volumes")
+
+    if yaml.exists():
+        run_command(f"docker-compose -f {yaml} down --volumes")
+        print()
+
     shutil.rmtree(fp_path)
 
-    typer.secho("\n[ ✔ ] Successfully removed your S3 bridge.", fg=typer.colors.GREEN)
+    typer.secho("[ ✔ ] Successfully removed your S3 bridge.", fg=typer.colors.GREEN)
