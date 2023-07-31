@@ -25,9 +25,8 @@ def start_bridge(
     ),
     bucket: Optional[str] = typer.Option(
         None,
-        help="The bucket to expose via SFTP. This option is mutually exclusive with"
-        " `--fingerprint`. When you supply this for the first time, you must also"
-        " supply credentials.",
+        help="The bucket to expose via SFTP. When you supply this for the first time,"
+        " you must also supply access credentials.",
     ),
     access_key_id: Optional[str] = typer.Option(
         None,
@@ -117,8 +116,7 @@ def start_bridge(
 def stop_bridge(
     fingerprint: str = typer.Argument(
         ...,
-        help="The fingerprint associated with an existing SFTP-bucket bridge. This"
-        " option is mutually exclusive with all other options.",
+        help="The fingerprint associated with an existing SFTP-bucket bridge.",
     )
 ) -> None:
     """Shuts down an existing S3 bridge."""
@@ -152,8 +150,7 @@ def stop_bridge(
 def remove_bridge(
     fingerprint: str = typer.Argument(
         ...,
-        help="The fingerprint associated with an existing SFTP-bucket bridge. This"
-        " option is mutually exclusive with all other options.",
+        help="The fingerprint associated with an existing SFTP-bucket bridge.",
     )
 ) -> None:
     """Shuts down and removes an existing S3 bridge."""

@@ -12,7 +12,7 @@ Operating system versions are supplied by [GitHub Actions](https://docs.github.c
 You can install this package via pip:
 
 ```sh
-$ pip install git+ssh://git@github.com:metabronx/sdcli.git
+$ pip install git+https://github.com/metabronx/sdcli.git
 $ sdcli --help
 ```
 
@@ -122,7 +122,7 @@ $ sdcli s3 bridge [OPTIONS]
 **Options**:
 
 * `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.
-* `--bucket TEXT`: The bucket to expose via SFTP. This option is mutually exclusive with `--fingerprint`. When you supply this for the first time, you must also supply credentials.
+* `--bucket TEXT`: The bucket to expose via SFTP. When you supply this for the first time, you must also supply access credentials.
 * `--access-key-id TEXT`: Your AWS Access Key ID. This must be supplied when first connecting to a bucket.
 * `--secret-access-key TEXT`: Your AWS Secret Access Key. This must be supplied when first connecting to a bucket.
 * `--force-restart`: By default, existing S3 bridges will not be restarted if they're already running. Specify this flag to override this behavior. This is equivalent to the `--force-recreate` flag provided Docker Compose.
@@ -134,12 +134,12 @@ Shuts down an existing S3 bridge.
 **Usage**:
 
 ```console
-$ sdcli s3 stop-bridge [OPTIONS]
+$ sdcli s3 stop-bridge FINGERPRINT
 ```
 
-**Options**:
+**Arguments**:
 
-* `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.  [required]
+* `FINGERPRINT`: The fingerprint associated with an existing SFTP-bucket bridge.  [required]
 
 #### `sdcli s3 delete-bridge`
 
@@ -148,12 +148,12 @@ Shuts down and removes an existing S3 bridge.
 **Usage**:
 
 ```console
-$ sdcli s3 delete-bridge [OPTIONS]
+$ sdcli s3 delete-bridge FINGERPRINT
 ```
 
-**Options**:
+**Arguments**:
 
-* `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.  [required]
+* `FINGERPRINT`: The fingerprint associated with an existing SFTP-bucket bridge.  [required]
 
 ## License
 
