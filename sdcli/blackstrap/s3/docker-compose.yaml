@@ -3,9 +3,11 @@ version: "3"
 services:
   s3fs:
     container_name: blackstrap_bridge_${FINGERPRINT}
-    image: ghcr.io/metabronx/blackstrap-s3
+    image: ghcr.io/metabronx/blackstrap-s3:latest
     cap_add:
       - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
     devices:
       - /dev/fuse
     ports:
