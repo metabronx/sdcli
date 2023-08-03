@@ -7,13 +7,14 @@ after / before each test.
 from pathlib import Path
 
 
-def test_login(invoke_command):
+def test_login(invoke_command, filesystem):
     """Test the login command. It should write the given credentials to file."""
-    credentials = Path.home() / ".sdcli" / "credentials"
+    credentials = filesystem / ".sdcli" / "credentials"
 
     assert not credentials.exists()
-    invoke_command("gh login", input="username\npassword")
+    res = invoke_command("gh login", input="username\npassword")
 
+    assert res.exit_code == 0
     assert credentials.exists()
     assert credentials.read_text() == "username\npassword"
 
@@ -27,7 +28,11 @@ def test_invite_single(requests_mock, invoke_command):
     )
     requests_mock.post("https://api.github.com/orgs/metabronx/invitations")
 
-    invoke_command("gh invite test.user@metabronx.com --team abba --team queen")
+    res = invoke_command(
+        "gh invite test.user@metabronx.com --team abba --team queen",
+        env={"GH_USERNAME": "test.user", "GH_TOKEN": "password"},
+    )
+    assert res.exit_code == 0
 
     # one for the team call, one for the invite
     assert requests_mock.call_count == 2
@@ -55,7 +60,11 @@ def test_invite_from_file(requests_mock, invoke_command):
         "test.user0@metabronx.com\ntest.user1@metabronx.com"
     )
 
-    invoke_command("gh invite --from-file mock_accounts.csv --team abba --team queen")
+    res = invoke_command(
+        "gh invite --from-file mock_accounts.csv --team abba --team queen",
+        env={"GH_USERNAME": "test.user", "GH_TOKEN": "password"},
+    )
+    assert res.exit_code == 0
 
     # one for the team call, 1 for each invite
     assert requests_mock.call_count == 3
@@ -83,7 +92,11 @@ def test_assign_teams(requests_mock, invoke_command):
         "\n".join(f"{u},{t}" for u, t in assignments)
     )
 
-    invoke_command("gh assign-teams mock_assignments.csv")
+    res = invoke_command(
+        "gh assign-teams mock_assignments.csv",
+        env={"GH_USERNAME": "test.user", "GH_TOKEN": "password"},
+    )
+    assert res.exit_code == 0
 
     # one for each assignment
     assert requests_mock.call_count == len(assignments)
@@ -101,7 +114,9 @@ def test_remove_single(requests_mock, invoke_command):
     """Test the invocation for removing a single user from the org."""
     requests_mock.delete("https://api.github.com/orgs/metabronx/members/test.user")
 
-    invoke_command("gh remove test.user")
+    invoke_command(
+        "gh remove test.user", env={"GH_USERNAME": "test.user", "GH_TOKEN": "password"}
+    )
 
     # one for the deletion
     assert requests_mock.call_count == 1
@@ -122,7 +137,11 @@ def test_remove_from_file(requests_mock, invoke_command):
 
     Path("mock_removals.csv").write_text("\n".join(users))
 
-    invoke_command("gh remove --from-file mock_removals.csv")
+    res = invoke_command(
+        "gh remove --from-file mock_removals.csv",
+        env={"GH_USERNAME": "test.user", "GH_TOKEN": "password"},
+    )
+    assert res.exit_code == 0
 
     # one for each assignment
     assert requests_mock.call_count == len(users)

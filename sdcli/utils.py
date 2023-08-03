@@ -188,8 +188,9 @@ def validate_compose_yaml(yaml: Path, fingerprint_path: Path) -> None:
     Checks if the provided yaml is valid for the installed version of Docker Compose.
     """
     try:
+        str_yaml = str(yaml)
         run_command(
-            f"docker-compose -f {yaml} config -o {yaml} --bananas",
+            ["docker-compose", "-f", str_yaml, "config", "-o", str_yaml],
             capture=True,
             exit_on_error=False,
         )
@@ -223,4 +224,5 @@ def is_container_running(container_name: str) -> bool:
         CompletedProcess[str],
         run_command('docker ps --format "{{.Names}}"', capture=True),
     )
+
     return container_name in containers.stdout

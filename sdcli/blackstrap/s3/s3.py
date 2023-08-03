@@ -5,15 +5,9 @@ from typing import Optional
 
 import typer
 
-from sdcli.utils import (
-    fingerprint_path,
-    is_container_running,
-    is_docker_supported,
-    run_command,
-    validate_compose_yaml,
-)
+import sdcli.utils as utils
 
-s3 = typer.Typer(callback=is_docker_supported)
+s3 = typer.Typer(callback=utils.is_docker_supported)
 
 
 @s3.command("bridge", no_args_is_help=True)
@@ -50,7 +44,7 @@ def start_bridge(
 
     operation = "start"
 
-    det_fingerprint, fp_path = fingerprint_path(
+    det_fingerprint, fp_path = utils.fingerprint_path(
         "blackstrap",
         "s3",
         fingerprint=fingerprint,
@@ -87,10 +81,10 @@ def start_bridge(
 
         # validate and normalize the generated yaml. this helps catch version mismatches
         # between the template and the locally installed compose version
-        validate_compose_yaml(yaml, fp_path)
+        utils.validate_compose_yaml(yaml, fp_path)
     else:
         print("Existing S3 bridge configuration found.")
-        if not force_restart and is_container_running(det_fingerprint):
+        if not force_restart and utils.is_container_running(det_fingerprint):
             typer.secho(
                 "\n[ ! ] Your S3 bridge is already running!\n      If you intended to"
                 " force a restart, you must specify the --force-restart option.",
@@ -101,7 +95,9 @@ def start_bridge(
             operation = f"re{operation}"
 
     print(f"Your S3 bridge is {operation}ing. This may take a few seconds.")
-    run_command(f"docker-compose -f {yaml} up -d --force-recreate")
+    utils.run_command(
+        ["docker-compose", "-f", str(yaml), "up", "-d", "--force-recreate"]
+    )
 
     typer.secho(
         f"\n[ ✔ ] Successfully {operation}ed your S3 bridge!\n      The service has the"
@@ -120,10 +116,10 @@ def stop_bridge(
     )
 ) -> None:
     """Shuts down an existing S3 bridge."""
-    _, fp_path = fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
+    _, fp_path = utils.fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
     yaml = fp_path / "docker-compose.yaml"
 
-    if not is_container_running(fingerprint):
+    if not utils.is_container_running(fingerprint):
         typer.secho("\n[ ! ] Your S3 bridge is not running.", fg=typer.colors.YELLOW)
         raise typer.Exit(code=1)
     elif not yaml.exists():
@@ -137,7 +133,7 @@ def stop_bridge(
         raise typer.Exit(code=1)
 
     print("Shutting down your S3 bridge...")
-    run_command(f"docker-compose -f {yaml} stop")
+    utils.run_command(["docker-compose", "-f", str(yaml), "stop"])
 
     typer.secho(
         "[ ✔ ] Successfully stopped your S3 bridge.\n      You can restart it"
@@ -154,13 +150,13 @@ def remove_bridge(
     )
 ) -> None:
     """Shuts down and removes an existing S3 bridge."""
-    _, fp_path = fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
+    _, fp_path = utils.fingerprint_path("blackstrap", "s3", fingerprint=fingerprint)
     yaml = fp_path / "docker-compose.yaml"
 
     print("Removing your S3 bridge...")
 
     if yaml.exists():
-        run_command(f"docker-compose -f {yaml} down --volumes")
+        utils.run_command(["docker-compose", "-f", str(yaml), "down", "--volumes"])
         print()
 
     shutil.rmtree(fp_path)

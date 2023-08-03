@@ -5,7 +5,7 @@ from typing import List, Optional
 import typer
 from tqdm import tqdm
 
-from ..utils import wrap_ghsession
+import sdcli.utils as utils
 
 gh = typer.Typer()
 
@@ -72,7 +72,7 @@ def invite(
         raise typer.Exit(code=1)
 
     # invite all members
-    with wrap_ghsession() as session:
+    with utils.wrap_ghsession() as session:
         team_ids = []
         team = team or ["members"]
         # fetch team IDs to pass to through during user invitation. it's easier
@@ -136,7 +136,7 @@ def assign_teams(
     teamships = csv.reader(data, strict=True, skipinitialspace=True)
 
     # assign all teamships
-    with wrap_ghsession() as session:
+    with utils.wrap_ghsession() as session:
 
         def _assign(username: str, team: str) -> None:
             # assign the specified user to the given team as a member
@@ -192,7 +192,7 @@ def remove(
         raise typer.Exit(code=1)
 
     # invite all members
-    with wrap_ghsession() as session:
+    with utils.wrap_ghsession() as session:
 
         def _remove(username: str) -> None:
             # remove the specified username from the organization, or cancel a pending

@@ -1,6 +1,6 @@
 import typer
 
-from .blackstrap import s3 as blackstrap_s3
+from .blackstrap import s3_typer as blackstrap_s3
 from .commands import gh
 
 app = typer.Typer(
