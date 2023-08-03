@@ -221,7 +221,7 @@ def is_container_running(container_name: str) -> bool:
     target a specific container ensure the name is unique.
     """
     containers = cast(
-        CompletedProcess[str],
+        "CompletedProcess[str]",
         run_command('docker ps --format "{{.Names}}"', capture=True),
     )
 
