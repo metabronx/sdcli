@@ -30,6 +30,22 @@ def test_bridge_new(mock_run_command, truthy_check_docker, invoke_command, files
     )
 
 
+def test_bridge_new_invalid(
+    mock_run_command, truthy_check_docker, invoke_command, filesystem
+):
+    """
+    Check that an existing fingerprint configuration that is missing a service yaml
+    errors out gracefully.
+    """
+    fp_path = filesystem / ".sdcli" / "blackstrap" / "s3" / "banana"
+    fp_path.mkdir(parents=True)
+
+    res = invoke_command("s3 bridge --fingerprint=banana")
+
+    assert res.exit_code == 1
+    assert b"the underlying bridge configuration file is missing." in res.stdout_bytes
+
+
 def test_bridge_existing_stopped(
     mock_run_command, truthy_check_docker, invoke_command, filesystem
 ):

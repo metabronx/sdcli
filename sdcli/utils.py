@@ -4,6 +4,7 @@ import hashlib
 import os
 import sys
 from contextlib import contextmanager
+from functools import lru_cache
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, CompletedProcess, run
 from typing import Dict, Iterator, List, Optional, Tuple, Union, cast
@@ -13,9 +14,14 @@ from cachecontrol import CacheControl
 
 from .retry_session import RetrySession
 
-HASHLIB_KWARGS: Dict[str, bool] = {}
-if sys.version_info >= (3, 9):
-    HASHLIB_KWARGS["usedforsecurity"] = False
+
+@lru_cache(maxsize=None)
+def _get_hashlib_kwargs() -> Dict[str, bool]:
+    kwargs: Dict[str, bool] = {}
+    if sys.version_info >= (3, 9):
+        kwargs["usedforsecurity"] = False
+
+    return kwargs
 
 
 def _get_creds() -> Tuple[str, str]:
@@ -163,7 +169,7 @@ def fingerprint_path(
         fingerprint
         # we need predictable results between interpreters, which hash() won't provide
         or hashlib.md5(
-            "|".join(cast(Tuple[str, ...], hashable)).encode(), **HASHLIB_KWARGS
+            "|".join(cast(Tuple[str, ...], hashable)).encode(), **_get_hashlib_kwargs()
         ).hexdigest()
     )
 

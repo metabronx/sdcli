@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import typer
 from tqdm import tqdm
@@ -101,10 +101,10 @@ def invite(
             # invite a single person if an email was supplied
             _invite(email)
             count = 1
-        elif from_file:
+        else:
             # if a file was supplied, get all the users from it and strip away
             # any whitespace
-            users = [user.strip() for user in from_file]
+            users = [user.strip() for user in cast(typer.FileText, from_file)]
             count = len(users)
             # create a progress bar for visual kindness and run through creating
             # all the invitations
@@ -204,10 +204,10 @@ def remove(
             # remove a single person if a username was supplied
             _remove(username)
             count = 1
-        elif from_file:
+        else:
             # if a file was supplied, get all the users from it and strip away
             # any whitespace
-            users = [user.strip() for user in from_file]
+            users = [user.strip() for user in cast(typer.FileText, from_file)]
             count = len(users)
             # remove all the users
             typer.echo()

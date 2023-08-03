@@ -3,6 +3,8 @@
 .mypy_cache
 __pycache__
 .ruff_cache
+.coverage
+coverage.xml
 
 # builds
 dist

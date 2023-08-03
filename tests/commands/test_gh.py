@@ -79,6 +79,21 @@ def test_invite_from_file(requests_mock, invoke_command):
         }
 
 
+def test_invite_single_and_file_bad(requests_mock, invoke_command):
+    """
+    Test the invocation for inviting only works with either an email or a file of
+    several.
+    """
+    Path("mock_accounts.csv").touch()
+
+    res = invoke_command(
+        "gh invite test.user@metabronx.com --from-file mock_accounts.csv"
+    )
+
+    assert res.exit_code == 1
+    assert b"You must supply either an email or file of emails." in res.stdout_bytes
+
+
 def test_assign_teams(requests_mock, invoke_command):
     """Test the invocation for assigning multiple users to different teams via CSV."""
     assignments = [("test.user0", "members"), ("test.user1", "engineers")]
@@ -149,3 +164,18 @@ def test_remove_from_file(requests_mock, invoke_command):
     for u, req in zip(users, requests_mock.request_history):
         assert req.method == "DELETE"
         assert req.url == f"https://api.github.com/orgs/metabronx/members/{u}"
+
+
+def test_remove_single_and_file_bad(requests_mock, invoke_command):
+    """
+    Test the invocation for removing only works with either a username or a file of
+    several.
+    """
+    Path("mock_removals.csv").touch()
+
+    res = invoke_command("gh remove test.user --from-file mock_removals.csv")
+
+    assert res.exit_code == 1
+    assert (
+        b"You must supply either a username or file of usernames." in res.stdout_bytes
+    )
