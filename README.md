@@ -1,10 +1,11 @@
 # sdcli
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/metabronx/sdcli/ci.yaml?label=tests&style=flat-square)
+![GitHub Workflow Status](https://raster.shields.io/github/actions/workflow/status/metabronx/sdcli/ci.yaml?label=tests&style=flat-square)
+![code coverage](https://raster.shields.io/endpoint?color=lightblue&label=code%20coverage&style=flat-square&url=https%3A%2F%2Fopenendpoint.tools%2Fmetrics%2Fgeneric%2Fsdcli)
 
 A command-line utility for executing essential but laborious tasks.
 
-Tested support on Python 3.7, 3.8, 3.9, 3.10, and 3.11 on macOS, Windows, and Linux.  
+Tested support on Python 3.7, 3.8, 3.9, 3.10, and 3.11 on macOS, Windows, and Linux. 100% code coverage.  
 Operating system versions are supplied by [GitHub Actions](https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#choosing-github-hosted-runners).
 
 ## Installation
