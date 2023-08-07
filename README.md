@@ -1,15 +1,19 @@
 # sdcli
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/metabronx/sdcli/ci.yaml?label=tests&style=flat-square)
+![GitHub Workflow Status](https://raster.shields.io/github/actions/workflow/status/metabronx/sdcli/ci.yaml?label=tests&style=flat-square)
+![code coverage](https://raster.shields.io/endpoint?color=lightblue&label=code%20coverage&style=flat-square&url=https%3A%2F%2Fopenendpoint.tools%2Fmetrics%2Fgeneric%2Fsdcli)
 
 A command-line utility for executing essential but laborious tasks.
+
+Tested support on Python 3.7, 3.8, 3.9, 3.10, and 3.11 on macOS, Windows, and Linux. 100% code coverage.  
+Operating system versions are supplied by [GitHub Actions](https://docs.github.com/en/actions/using-jobs/choosing-the-runner-for-a-job#choosing-github-hosted-runners).
 
 ## Installation
 
 You can install this package via pip:
 
 ```sh
-$ pip install git+ssh//git@github.com:metabronx/sdcli.git
+$ pip install git+https://github.com/metabronx/sdcli.git
 $ sdcli --help
 ```
 
@@ -19,10 +23,10 @@ sdcli's commands are organized by the application with which the tool interfaces
 
 ### `sdcli gh`
 
-This does things with GitHub's v3 REST API with the following subcommands:
+This does things with GitHub's v3 REST API via the following subcommands:
 
 - `auth`: Authenticates your machine with GitHub.
-- `invite`: Invites the given email(s) to the metabroxn organization.
+- `invite`: Invites the given email(s) to the metabronx organization.
 - `assign-teams`: Assigns users to their metabronx organization team.
 - `remove`: Removes the given username(s) from the metabronx organization.
 
@@ -40,8 +44,7 @@ $ sdcli gh auth
 
 #### `sdcli gh assign-teams`
 
-Assigns each user to their metabronx GitHub organization team using the
-provided CSV.
+Assigns each user to their metabronx GitHub organization team using the provided CSV.
 
 If the authenticated user is an organization Owner, and the users to assign are not already a part of the organization, they will also receive invites. Upon acceptance, they will be assigned to the team in the CSV.
 
@@ -99,6 +102,60 @@ $ sdcli gh remove [OPTIONS] [USERNAME]
 
 - `--from-file FILENAME`: A line-delimited text file of usernames to remove. This option is mutually exclusive with supplying a single username.
 
+### `sdcli s3` [🏴‍☠️]
+
+This does things with Amazon AWS S3 via the following subcommands:
+
+- `bridge`: Exposes S3 via a local SFTP connection (a "bridge").
+- `stop-bridge`: Shuts down a bridge.
+- `remove-bridge`: Shuts down and removes all data for a bridge.
+
+#### `sdcli s3 bridge`
+
+Bridges an S3 object store (bucket) to an SFTP-accessible file system.
+
+**Usage**:
+
+```console
+$ sdcli s3 bridge [OPTIONS]
+```
+
+**Options**:
+
+* `--fingerprint TEXT`: The fingerprint associated with an existing SFTP-bucket bridge. This option is mutually exclusive with all other options.
+* `--bucket TEXT`: The bucket to expose via SFTP. When you supply this for the first time, you must also supply access credentials.
+* `--access-key-id TEXT`: Your AWS Access Key ID. This must be supplied when first connecting to a bucket.
+* `--secret-access-key TEXT`: Your AWS Secret Access Key. This must be supplied when first connecting to a bucket.
+* `--force-restart`: By default, existing S3 bridges will not be restarted if they're already running. Specify this flag to override this behavior. This is equivalent to the `--force-recreate` flag provided Docker Compose.
+
+#### `sdcli s3 stop-bridge`
+
+Shuts down an existing S3 bridge.
+
+**Usage**:
+
+```console
+$ sdcli s3 stop-bridge FINGERPRINT
+```
+
+**Arguments**:
+
+* `FINGERPRINT`: The fingerprint associated with an existing SFTP-bucket bridge.  [required]
+
+#### `sdcli s3 delete-bridge`
+
+Shuts down and removes an existing S3 bridge.
+
+**Usage**:
+
+```console
+$ sdcli s3 delete-bridge FINGERPRINT
+```
+
+**Arguments**:
+
+* `FINGERPRINT`: The fingerprint associated with an existing SFTP-bucket bridge.  [required]
+
 ## License
 
-License here.
+Elias

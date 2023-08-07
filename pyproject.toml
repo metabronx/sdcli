@@ -1,6 +1,6 @@
 [project]
 name = "sdcli"
-version = "2.1.0"
+version = "2.2.0"
 description = "A command line tool for automating important grunt work."
 authors = [
     {name = "Elias Gabriel", email = "me@eliasfgabriel.com"},
@@ -14,21 +14,32 @@ dependencies = [
     "cachecontrol<1.0.0,>=0.12.11",
 ]
 
-[project.group.dev.dependencies]
-typer-cli = "^0.0.12"
+[project.urls]
+homepage = "https://www.metabronx.com/"
+documentation = "https://github.com/metabronx/sdcli"
+repository = "https://github.com/metabronx/sdcli"
 
 [project.scripts]
-sdcli = "sdcli.main:app"
+sdcli = "sdcli.__main__:app"
 
-[tool.isort]
-profile = "black"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "typer-cli>=0.0.13",
+    "pytest>=7.4.0",
+    "requests-mock>=1.11.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.pdm.scripts]
+docs = "typer sdcli.main utils docs --name sdcli --output USAGE.md"
 
 [tool.mypy]
-follow_imports = "silent"
-ignore_missing_imports = true
-warn_return_any = true
-warn_unreachable = true
-show_column_numbers = true
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "--capture=fd -vv"
+testpaths = [ "tests" ]
 
 [build-system]
 requires = ["pdm-backend"]

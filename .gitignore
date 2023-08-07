@@ -2,12 +2,16 @@
 .pytest_cache
 .mypy_cache
 __pycache__
+.ruff_cache
+.coverage
+coverage.xml
 
 # builds
 dist
 .pdm-build
 
 # env
+__pypackages__
 .venv
 .pdm-python
 
